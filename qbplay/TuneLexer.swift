@@ -1,9 +1,6 @@
-import Observation
-
-@Observable
-final class TuneLexer {
+struct TuneLexer {
     // MARK: - Methods
-    func lex(tune: String) throws -> [MMLCommand] {
+    func lex(_ tune: String) throws -> [MMLCommand] {
         var input = Array(tune.filter { !$0.isWhitespace }.uppercased())[...]
         var output: [MMLCommand] = []
         
@@ -31,7 +28,7 @@ final class TuneLexer {
                 output.append(.noteLength(length))
             case "M":
                 guard let music = input.popFirst() else { throw LexerError.invalidMusic }
-                var technique: Technique
+                let technique: Technique
                 
                 switch music {
                 case "B", "F":

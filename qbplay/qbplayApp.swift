@@ -2,14 +2,15 @@ import SwiftUI
 
 @main
 struct qbplayApp: App {
-    let lexer = TuneLexer()
-    let player = TunePlayer(sampleRate: 48_000.0)
+    private let player = try? TunePlayer()
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if let player {
+                ContentView(player: player)
+            } else {
+                ContentUnavailableView("Audio Unavailable", systemImage: "speaker.slash")
+            }
         }
-        .environment(lexer)
-        .environment(player)
     }
 }

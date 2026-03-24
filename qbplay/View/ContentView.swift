@@ -1,11 +1,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(TuneLexer.self) private var lexer
-    @Environment(TunePlayer.self) private var player
+    let player: TunePlayer
+    
+    private let lexer = TuneLexer()
+    private let interpreter = TuneInterpreter()
+    
     @State private var tune: String = ""
     @State private var commands: [MMLCommand] = []
-    @State private var output: String = ""
+    @State private var events: [TuneEvent] = []
     
     // MARK: - Body
     var body: some View {
@@ -15,11 +18,6 @@ struct ContentView: View {
                 Spacer()
                 Button("Play", action: play)
             }
-            
-            GroupBox("Output") {
-                Text(output)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
         }
         .padding()
     }
@@ -27,12 +25,12 @@ struct ContentView: View {
     // MARK: - Methods
     private func play() {
         do {
-            commands = try lexer.lex(tune: tune.trimmingCharacters(in: .whitespacesAndNewlines))
-            player.play(commands)
-            output = commands.map { String(describing: $0) }.joined(separator: "\n")
+            commands = try lexer.lex(tune.trimmingCharacters(in: .whitespacesAndNewlines))
+            events = try interpreter.interpret(commands)
+            try player.play(events)
         } catch {
             commands.removeAll()
-            output = error.localizedDescription
+            events.removeAll()
         }
     }
 }
@@ -40,7 +38,11 @@ struct ContentView: View {
 
 // MARK: - Preview
 #Preview {
-    ContentView()
-        .environment(TuneLexer())
-        .environment(TunePlayer(sampleRate: 48_000.0))
+    let player = try? TunePlayer()
+    
+    if let player {
+        ContentView(player: player)
+    } else {
+        ContentUnavailableView("Audio Unavailable", systemImage: "speaker.slash")
+    }
 }

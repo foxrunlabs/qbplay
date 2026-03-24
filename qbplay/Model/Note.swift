@@ -12,7 +12,7 @@ struct Note {
         tempo: Int,
         length: Int,
         dots: Int?,
-        technique: Technique,
+        technique: Technique
     ) {
         self.pitch = pitch
         let sustain = dots.map { 2.0 - pow(0.5, TimeInterval($0)) } ?? 1.0
@@ -20,7 +20,7 @@ struct Note {
         self.technique = technique
     }
     
-    // MARK: - Computed Properties
+    // MARK: - Methods
     func samples(sampleRate: Hertz) -> [Float] {
         // Compute total samples, note samples, and rest samples based on technique
         let totalCount = Int(sampleRate * duration)

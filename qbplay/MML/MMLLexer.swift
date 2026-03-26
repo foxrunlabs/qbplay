@@ -1,22 +1,31 @@
-struct TuneLexer {
-    // MARK: - Methods
+/// An object that lexes MML command strings.
+struct MMLLexer {
+    /// Lex a tune string.
+    /// - Parameter tune: A string representing MML commands.
+    /// - Returns: A sequence of MML commands.
+    /// - Throws: If there is an error lexing, this method throws a LexerError.
     func lex(_ tune: String) throws -> [MMLCommand] {
+        // Remove any whitespace in string and convert to uppercase
         var input = Array(tune.filter { !$0.isWhitespace }.uppercased())[...]
         var output: [MMLCommand] = []
         
         while let c = input.popFirst() {
             switch c {
+            // Named note
             case "A"..."G":
                 let accidental = readAccidental(from: &input)
                 let length = readNumber(from: &input)
                 
+                // Length is optional for named notes, but if it's present then it should be a value
+                // in a range of 1 to 64.
                 if let length, length < 1 || length > 64 {
                     throw LexerError.invalidNoteLength
                 }
                 
                 let dots = readDots(from: &input)
-                
                 output.append(.namedNote(c, accidental: accidental, length: length, dots: dots))
+            
+            // Note length
             case "L":
                 guard
                     let length = readNumber(from: &input),
@@ -26,35 +35,41 @@ struct TuneLexer {
                 }
                 
                 output.append(.noteLength(length))
+            
+            // Articulation
             case "M":
                 guard let music = input.popFirst() else { throw LexerError.invalidMusic }
-                let technique: Technique
+                let articulation: Articulation
                 
                 switch music {
                 case "B", "F":
+                    // These represent background and foreground in QBasic. We can ignore them.
                     continue
                 case "L":
-                    technique = .legato
+                    articulation = .legato
                 case "N":
-                    technique = .normal
+                    articulation = .normal
                 case "S":
-                    technique = .staccato
+                    articulation = .staccato
                 default:
-                    throw LexerError.invalidTechnique
+                    throw LexerError.invalidArticulation
                 }
                 
-                output.append(.technique(technique))
+                output.append(.articulation(articulation))
+            
+            // Numbered note
             case "N":
                 guard
                     let number = readNumber(from: &input),
                     number >= 0 && number <= 84
                 else {
-                    throw LexerError.invalidNote
+                    throw LexerError.invalidNumberedNote
                 }
                 
                 let dots = readDots(from: &input)
-                
                 output.append(.numberedNote(number, dots: dots))
+            
+            // Octave
             case "O":
                 guard
                     let octave = readNumber(from: &input),
@@ -64,6 +79,8 @@ struct TuneLexer {
                 }
                 
                 output.append(.octave(octave))
+            
+            // Rest
             case "P", "R":
                 guard
                     let length = readNumber(from: &input),
@@ -73,8 +90,9 @@ struct TuneLexer {
                 }
                 
                 let dots = readDots(from: &input)
-                
                 output.append(.rest(length: length, dots: dots))
+            
+            // Tempo
             case "T":
                 guard
                     let tempo = readNumber(from: &input),
@@ -84,18 +102,27 @@ struct TuneLexer {
                 }
                 
                 output.append(.tempo(tempo))
+            
+            // Shift octave down
             case "<":
                 output.append(.octaveDown)
+            
+            // Shift octave up
             case ">":
                 output.append(.octaveUp)
+            
+            // Unknown command
             default:
-                throw LexerError.invalidTune
+                throw LexerError.unknownCommand
             }
         }
         
         return output
     }
     
+    /// Read an accidental character for a note.
+    /// - Parameter input: A string representing MML commands.
+    /// - Returns: The accidental for the note.
     private func readAccidental(from input: inout ArraySlice<String.Element>) -> Accidental {
         guard let c = input.first, "#+-".contains(c) else { return .none }
         input.removeFirst()
@@ -106,21 +133,28 @@ struct TuneLexer {
         case "-":
             .flat
         default:
+            // We should never get here.
             .none
         }
     }
     
-    private func readDots(from input: inout ArraySlice<String.Element>) -> Int? {
-        var value: Int?
+    /// Read the number of sustain dots for a note or rest.
+    /// - Parameter input: A string representing MML commands.
+    /// - Returns: The number of sustain dots for the note or rest.
+    private func readDots(from input: inout ArraySlice<String.Element>) -> Int {
+        var value = 0
         
         while let c = input.first, c == "." {
-            value = (value ?? 0) + 1
+            value += 1
             input.removeFirst()
         }
         
         return value
     }
     
+    /// Read a number.
+    /// - Parameter input: A string representing MML commands..
+    /// - Returns: An integer value, or `nil` if no number present.
     private func readNumber(from input: inout ArraySlice<String.Element>) -> Int? {
         var value: Int?
         
@@ -135,15 +169,31 @@ struct TuneLexer {
 
 
 // MARK: - Lexer Error
-extension TuneLexer {
+extension MMLLexer {
+    /// An error that occurs when lexing a MML command string.
     enum LexerError: Error {
+        /// An indication that there is an invalid music command.
         case invalidMusic
+        
+        /// An indication that there is an invalid note length.
         case invalidNoteLength
-        case invalidNote
+        
+        /// An indication that there is an invalid numbered note.
+        case invalidNumberedNote
+        
+        /// An indication that there is an invalid octave.
         case invalidOctave
+        
+        /// An indication that there is an invalid rest.
         case invalidRest
-        case invalidTechnique
+        
+        /// An indication that there is an invalid articulation.
+        case invalidArticulation
+        
+        /// An indication that there is an invalid tempo.
         case invalidTempo
-        case invalidTune
+        
+        /// An indication that there is an unknown MML command.
+        case unknownCommand
     }
 }

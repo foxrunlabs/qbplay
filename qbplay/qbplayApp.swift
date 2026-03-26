@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct qbplayApp: App {
-    private let player = try? TunePlayer()
+    private let player = try? MusicEventPlayer()
     
     var body: some Scene {
         WindowGroup {

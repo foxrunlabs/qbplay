@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    let player: TunePlayer
+    let player: MusicEventPlayer
     
-    private let lexer = TuneLexer()
-    private let interpreter = TuneInterpreter()
+    private let lexer = MMLLexer()
+    private let interpreter = MMLInterpreter()
     
     @State private var tune: String = ""
     @State private var commands: [MMLCommand] = []
-    @State private var events: [TuneEvent] = []
+    @State private var events: [MusicEvent] = []
     
     // MARK: - Body
     var body: some View {
@@ -38,7 +38,7 @@ struct ContentView: View {
 
 // MARK: - Preview
 #Preview {
-    let player = try? TunePlayer()
+    let player = try? MusicEventPlayer()
     
     if let player {
         ContentView(player: player)

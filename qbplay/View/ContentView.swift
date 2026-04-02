@@ -5,17 +5,27 @@ struct ContentView: View {
     @Bindable var player: AudioPlayer
     
     @State private var tune: String = ""
+    @FocusState private var isFocused: Bool
     
     // MARK: - Body
     var body: some View {
         VStack {
-            TextField("Tune", text: $tune)
+            TextEditor(text: $tune)
+                .qbasicTextEditorStyle()
+                .focused($isFocused)
+            
             HStack {
+                Button("<Play>", action: play)
+                    .buttonStyle(.qbasic)
+                    
                 Spacer()
-                Button("Play", action: play)
             }
+            .padding([.horizontal, .bottom], 4)
         }
-        .padding()
+        .background(Color.qbCyan)
+        .onAppear {
+            isFocused = true
+        }
     }
     
     // MARK: - Methods

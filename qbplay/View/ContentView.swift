@@ -22,7 +22,7 @@ struct ContentView: View {
             }
             .padding([.horizontal, .bottom], 4)
         }
-        .background(Color.qbCyan)
+        .background(.vgaCyan)
         .onAppear {
             isFocused = true
         }

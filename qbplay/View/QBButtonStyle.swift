@@ -4,8 +4,8 @@ import SwiftUI
 struct QBButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .background(configuration.isPressed ? Color.qbBrightWhite : Color.clear)
-            .foregroundStyle(configuration.isPressed ? Color.qbCyan : Color.qbBrightWhite)
+            .background(configuration.isPressed ? .vgaBrightWhite : .clear)
+            .foregroundStyle(configuration.isPressed ? .vgaCyan : .vgaBrightWhite)
             .clipShape(Rectangle())
             .font(.custom("Px437 IBM VGA 9x16", size: 16))
     }

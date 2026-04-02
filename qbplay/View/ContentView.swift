@@ -1,14 +1,10 @@
+import AVFoundation
 import SwiftUI
 
 struct ContentView: View {
-    let player: MusicEventPlayer
-    
-    private let lexer = MMLLexer()
-    private let interpreter = MMLInterpreter()
+    @Bindable var player: AudioPlayer
     
     @State private var tune: String = ""
-    @State private var commands: [MMLCommand] = []
-    @State private var events: [MusicEvent] = []
     
     // MARK: - Body
     var body: some View {
@@ -25,12 +21,12 @@ struct ContentView: View {
     // MARK: - Methods
     private func play() {
         do {
-            commands = try lexer.lex(tune.trimmingCharacters(in: .whitespacesAndNewlines))
-            events = try interpreter.interpret(commands)
-            try player.play(events)
+            let commands = try MMLLexer.lex(tune.trimmingCharacters(in: .whitespacesAndNewlines))
+            let events = try MMLInterpreter.interpret(commands)
+            let samples = AudioRenderer.render(events, sampleRate: player.format.sampleRate)
+            try player.play(samples)
         } catch {
-            commands.removeAll()
-            events.removeAll()
+            
         }
     }
 }
@@ -38,7 +34,7 @@ struct ContentView: View {
 
 // MARK: - Preview
 #Preview {
-    let player = try? MusicEventPlayer()
+    let player = try? AudioPlayer()
     
     if let player {
         ContentView(player: player)

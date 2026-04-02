@@ -4,7 +4,7 @@ struct MMLInterpreter {
     /// - Parameter commands: A sequence of MML commands.
     /// - Returns: A sequence of playable music events..
     /// - Throws: If there is an error interpreting, this method throws a PitchError.
-    func interpret(_ commands: [MMLCommand]) throws -> [MusicEvent] {
+    static func interpret(_ commands: [MMLCommand]) throws -> [MusicEvent] {
         var state = State()
         var events: [MusicEvent] = []
         

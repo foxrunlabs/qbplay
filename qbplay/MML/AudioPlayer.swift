@@ -1,8 +1,8 @@
 import AVFoundation
 import Observation
 
-/// An object that plays sequences of MML music events.
-@Observable final class MusicEventPlayer {
+/// An object that plays audio waveforms.
+@Observable final class AudioPlayer {
     private let audioEngine = AVAudioEngine()
     private let audioPlayerNode = AVAudioPlayerNode()
     
@@ -18,43 +18,17 @@ import Observation
     }
     
     // MARK: - Computed Properties
+    var format: AVAudioFormat { audioEngine.outputNode.outputFormat(forBus: 0) }
     var isPlaying: Bool { audioPlayerNode.isPlaying }
     
     // MARK: - Methods
     
-    /// Plays MML music events.
-    /// - Parameter events: An array of MML music events.
+    /// Plays audio.
+    /// - Parameter samples: An array of samples.
     /// - Throws: If there is an error creating the audio PCM buffer and pointer to `Float` channel data, this method throws the
     /// PlayerError.noAudioData error.
-    func play(_ events: [MusicEvent]) throws {
-        guard !events.isEmpty else { return }
-        
-        let format = audioEngine.outputNode.outputFormat(forBus: 0)
-        let sampleRate = format.sampleRate
-        
-        // Calculate the total number of samples required for the audio waveform.
-        let totalSamples = events.reduce(0) { sum, event in
-            switch event {
-            case .note(let note):
-                sum + Int(note.duration * sampleRate)
-            case .rest(let rest):
-                sum + Int(rest.duration * sampleRate)
-            }
-        }
-        
-        var samples: [Float] = []
-        samples.reserveCapacity(totalSamples)
-        
-        // Generate the audio waveform.
-        for event in events {
-            switch event {
-            case .note(let note):
-                samples.append(contentsOf: note.samples(sampleRate: sampleRate))
-            case .rest(let rest):
-                samples.append(contentsOf: rest.samples(sampleRate: sampleRate))
-            }
-        }
-        
+    func play(_ samples: [Float]) throws {
+        guard !samples.isEmpty else { return }
         guard
             let buffer = AVAudioPCMBuffer(
                 pcmFormat: format,
@@ -85,10 +59,10 @@ import Observation
 
 
 // MARK: - Player Error
-extension MusicEventPlayer {
+extension AudioPlayer {
     /// An error that occurs when playing MML music events.
     enum PlayerError: Error {
-        /// An indication that there is no audio PCM buffer or channel data.
+        /// An indication that there is no audio data available.
         case noAudioData
     }
 }

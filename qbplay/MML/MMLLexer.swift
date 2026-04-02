@@ -4,7 +4,7 @@ struct MMLLexer {
     /// - Parameter tune: A string representing MML commands.
     /// - Returns: A sequence of MML commands.
     /// - Throws: If there is an error lexing, this method throws a LexerError.
-    func lex(_ tune: String) throws -> [MMLCommand] {
+    static func lex(_ tune: String) throws -> [MMLCommand] {
         // Remove any whitespace in string and convert to uppercase
         var input = Array(tune.filter { !$0.isWhitespace }.uppercased())[...]
         var output: [MMLCommand] = []
@@ -123,7 +123,7 @@ struct MMLLexer {
     /// Read an accidental character for a note.
     /// - Parameter input: A string representing MML commands.
     /// - Returns: The accidental for the note.
-    private func readAccidental(from input: inout ArraySlice<String.Element>) -> Accidental {
+    private static func readAccidental(from input: inout ArraySlice<String.Element>) -> Accidental {
         guard let c = input.first, "#+-".contains(c) else { return .none }
         input.removeFirst()
         
@@ -141,7 +141,7 @@ struct MMLLexer {
     /// Read the number of sustain dots for a note or rest.
     /// - Parameter input: A string representing MML commands.
     /// - Returns: The number of sustain dots for the note or rest.
-    private func readDots(from input: inout ArraySlice<String.Element>) -> Int {
+    private static func readDots(from input: inout ArraySlice<String.Element>) -> Int {
         var value = 0
         
         while let c = input.first, c == "." {
@@ -155,7 +155,7 @@ struct MMLLexer {
     /// Read a number.
     /// - Parameter input: A string representing MML commands..
     /// - Returns: An integer value, or `nil` if no number present.
-    private func readNumber(from input: inout ArraySlice<String.Element>) -> Int? {
+    private static func readNumber(from input: inout ArraySlice<String.Element>) -> Int? {
         var value: Int?
         
         while let c = input.first, let digit = c.wholeNumberValue {

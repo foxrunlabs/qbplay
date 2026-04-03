@@ -55,6 +55,11 @@ import Observation
         audioPlayerNode.scheduleBuffer(buffer, at: nil)
         audioPlayerNode.play()
     }
+    
+    /// Stops audio.
+    func stop() {
+        if audioPlayerNode.isPlaying { audioPlayerNode.stop() }
+    }
 }
 
 

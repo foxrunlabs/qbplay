@@ -2,26 +2,36 @@ import AVFoundation
 import SwiftUI
 
 struct ContentView: View {
-    @Bindable var player: AudioPlayer
+    let player: AudioPlayer
     
     @State private var tune: String = ""
     @FocusState private var isFocused: Bool
     
     // MARK: - Body
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
+            HStack {
+                Text("QBasic Music Player")
+                    .font(.custom("Px437 IBM VGA 9x16", size: 16))
+                    .foregroundStyle(.vgaBlack)
+            }
+            .frame(maxWidth: .infinity)
+            .background(.vgaLightGray)
+            
             TextEditor(text: $tune)
                 .qbasicTextEditorStyle()
                 .focused($isFocused)
             
             HStack {
                 Button("<Play>", action: play)
-                    .buttonStyle(.qbasic)
-                    
+                Button("<Stop>", action: player.stop)
+                Button("<Export>", action: export)
                 Spacer()
             }
-            .padding([.horizontal, .bottom], 4)
+            .buttonStyle(.qbasic)
+            .padding(4)
         }
+        .frame(width: 640, height: 480)
         .background(.vgaCyan)
         .onAppear {
             isFocused = true
@@ -29,6 +39,8 @@ struct ContentView: View {
     }
     
     // MARK: - Methods
+    private func export() {}
+    
     private func play() {
         do {
             let commands = try MMLLexer.lex(tune.trimmingCharacters(in: .whitespacesAndNewlines))

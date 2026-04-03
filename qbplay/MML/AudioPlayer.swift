@@ -2,9 +2,12 @@ import AVFoundation
 import Observation
 
 /// An object that plays audio waveforms.
-@Observable final class AudioPlayer {
+@MainActor
+@Observable
+final class AudioPlayer {
     private let audioEngine = AVAudioEngine()
     private let audioPlayerNode = AVAudioPlayerNode()
+    private(set) var isPlaying = false
     
     // MARK: - Initializers
     
@@ -19,10 +22,9 @@ import Observation
     
     // MARK: - Computed Properties
     var format: AVAudioFormat { audioEngine.outputNode.outputFormat(forBus: 0) }
-    var isPlaying: Bool { audioPlayerNode.isPlaying }
     
     // MARK: - Methods
-    
+
     /// Plays audio.
     /// - Parameter samples: An array of samples.
     /// - Throws: If there is an error creating the audio PCM buffer and pointer to `Float` channel data, this method throws the
@@ -51,14 +53,25 @@ import Observation
             }
         }
         
+        isPlaying = false
         audioPlayerNode.stop()
-        audioPlayerNode.scheduleBuffer(buffer, at: nil)
+        
+        audioPlayerNode.scheduleBuffer(buffer, at: nil) { [weak self] in
+            // Execute on the main thread
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isPlaying = false
+            }
+        }
+        
         audioPlayerNode.play()
+        isPlaying = true
     }
     
     /// Stops audio.
     func stop() {
-        if audioPlayerNode.isPlaying { audioPlayerNode.stop() }
+        isPlaying = false
+        audioPlayerNode.stop()
     }
 }
 
@@ -71,3 +84,4 @@ extension AudioPlayer {
         case noAudioData
     }
 }
+

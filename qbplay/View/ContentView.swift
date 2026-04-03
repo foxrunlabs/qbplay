@@ -7,6 +7,9 @@ struct ContentView: View {
     @State private var tune: String = ""
     @FocusState private var isFocused: Bool
     
+    // MARK: - Computed Properties
+    private var playButtonLabel: String { player.isPlaying ? "<Stop>" : "<Play>" }
+    
     // MARK: - Body
     var body: some View {
         VStack(spacing: 0) {
@@ -23,9 +26,8 @@ struct ContentView: View {
                 .focused($isFocused)
             
             HStack {
-                Button("<Play>", action: play)
-                Button("<Stop>", action: player.stop)
-                Button("<Export>", action: export)
+                Button(playButtonLabel, action: play)
+                Button("<Export>", action: export).disabled(true)
                 Spacer()
             }
             .buttonStyle(.qbasic)
@@ -42,13 +44,17 @@ struct ContentView: View {
     private func export() {}
     
     private func play() {
-        do {
-            let commands = try MMLLexer.lex(tune.trimmingCharacters(in: .whitespacesAndNewlines))
-            let events = try MMLInterpreter.interpret(commands)
-            let samples = AudioRenderer.render(events, sampleRate: player.format.sampleRate)
-            try player.play(samples)
-        } catch {
-            
+        if player.isPlaying {
+            player.stop()
+        } else {
+            do {
+                let commands = try MMLLexer.lex(tune.trimmingCharacters(in: .whitespacesAndNewlines))
+                let events = try MMLInterpreter.interpret(commands)
+                let samples = AudioRenderer.render(events, sampleRate: player.format.sampleRate)
+                try player.play(samples)
+            } catch {
+                
+            }
         }
     }
 }

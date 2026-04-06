@@ -1,8 +1,13 @@
 /// An object that interprets MML commands.
 struct MMLInterpreter {
+    private static let maxOctave = 6
+    private static let maxLength = 64
+    private static let maxNote = 84
+    private static let maxTempo = 255
+    
     /// Interpret MML commands..
     /// - Parameter commands: A sequence of MML commands.
-    /// - Returns: A sequence of playable music events..
+    /// - Returns: A sequence of playable music events.
     /// - Throws: If there is an error interpreting, this method throws a PitchError.
     static func interpret(_ commands: [MMLCommand]) throws -> [MusicEvent] {
         var state = State()
@@ -16,6 +21,10 @@ struct MMLInterpreter {
             
             // Named note
             case .namedNote(let name, let accidental, let length, let dots):
+                if let length, length < 1 || length > maxLength {
+                    throw InterpreterError.invalidLength(length)
+                }
+                
                 let pitch = try Pitch(name: name, accidental: accidental, octave: state.octave)
                 let note = Note(
                     pitch: pitch,
@@ -29,10 +38,15 @@ struct MMLInterpreter {
             
             // Note length
             case .noteLength(let length):
+                if length < 1 || length > maxLength { throw InterpreterError.invalidLength(length) }
                 state.noteLength = length
             
             // Numbered note, or rest if number is 0.
             case .numberedNote(let number, let dots):
+                if number < 0 || number > maxNote {
+                    throw InterpreterError.invalidNumberedNote(number)
+                }
+                
                 if number == 0 {
                     let rest = Rest(tempo: state.tempo, length: state.noteLength, dots: dots)
                     events.append(rest)
@@ -51,6 +65,7 @@ struct MMLInterpreter {
             
             // Octave
             case .octave(let octave):
+                if octave < 0 || octave > maxOctave { throw InterpreterError.invalidOctave(octave) }
                 state.octave = octave
             
             // Shift octave down
@@ -59,15 +74,17 @@ struct MMLInterpreter {
             
             // Shift octave up
             case .octaveUp:
-                state.octave = min(state.octave + 1, 8)
+                state.octave = min(state.octave + 1, maxOctave)
             
             // Rest
             case .rest(let length, let dots):
+                if length < 1 || length > maxLength { throw InterpreterError.invalidLength(length) }
                 let rest = Rest(tempo: state.tempo, length: length, dots: dots)
                 events.append(rest)
             
             // Tempo
             case .tempo(let tempo):
+                if tempo < 32 || tempo > maxTempo { throw InterpreterError.invalidTempo(tempo) }
                 state.tempo = tempo
             }
         }
@@ -92,5 +109,28 @@ extension MMLInterpreter {
         
         /// Tempo for each note in quarter notes per minute. Default is 120.
         var tempo: Int = 120
+    }
+}
+
+
+// MARK: - Interpreter Error
+extension MMLInterpreter {
+    /// An error that occurs when interpreting MML commands.
+    enum InterpreterError: Error {
+        /// An indication that there is an invalid note length.
+        /// - Parameter length: Note length.
+        case invalidLength(_ length: Int)
+        
+        /// An indication that there is an invalid numbered note.
+        /// - Parameter number: Note number.
+        case invalidNumberedNote(_ number: Int)
+        
+        /// An indication that there is an invalid octave.
+        /// - Parameter octave: Octave number.
+        case invalidOctave(_ octave: Int)
+        
+        /// An indication that there is an invalid tempo.
+        /// - Parameter tempo: Tempo number.
+        case invalidTempo(_ tempo: Int)
     }
 }

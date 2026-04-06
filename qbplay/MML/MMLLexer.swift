@@ -3,9 +3,9 @@ struct MMLLexer {
     /// Lex a tune string.
     /// - Parameter tune: A string representing MML commands.
     /// - Returns: A sequence of MML commands.
-    /// - Throws: If there is an error lexing, this method throws a LexerError.
+    /// - Throws: If there is an error lexing, this method throws a LexerError or PitchError.
     static func lex(_ tune: String) throws -> [MMLCommand] {
-        // Remove any whitespace in string and convert to uppercase
+        // Remove any whitespace in the string and convert to uppercase
         var input = Array(tune.filter { !$0.isWhitespace }.uppercased())[...]
         var output: [MMLCommand] = []
         
@@ -15,22 +15,12 @@ struct MMLLexer {
             case "A"..."G":
                 let accidental = readAccidental(from: &input)
                 let length = readNumber(from: &input)
-                
-                // Length is optional for named notes, but if it's present then it should be a value
-                // in a range of 1 to 64.
-                if let length, length < 1 || length > 64 {
-                    throw LexerError.invalidNoteLength
-                }
-                
                 let dots = readDots(from: &input)
                 output.append(.namedNote(c, accidental: accidental, length: length, dots: dots))
             
             // Note length
             case "L":
-                guard
-                    let length = readNumber(from: &input),
-                    length >= 1 && length <= 64
-                else {
+                guard let length = readNumber(from: &input) else {
                     throw LexerError.invalidNoteLength
                 }
                 
@@ -38,7 +28,7 @@ struct MMLLexer {
             
             // Articulation
             case "M":
-                guard let music = input.popFirst() else { throw LexerError.invalidMusic }
+                guard let music = input.popFirst() else { throw LexerError.invalidArticulation }
                 let articulation: Articulation
                 
                 switch music {
@@ -59,10 +49,7 @@ struct MMLLexer {
             
             // Numbered note
             case "N":
-                guard
-                    let number = readNumber(from: &input),
-                    number >= 0 && number <= 84
-                else {
+                guard let number = readNumber(from: &input) else {
                     throw LexerError.invalidNumberedNote
                 }
                 
@@ -71,21 +58,15 @@ struct MMLLexer {
             
             // Octave
             case "O":
-                guard
-                    let octave = readNumber(from: &input),
-                    octave >= 0 && octave <= 8
-                else {
+                guard let octave = readNumber(from: &input) else {
                     throw LexerError.invalidOctave
                 }
                 
                 output.append(.octave(octave))
             
             // Rest
-            case "P", "R":
-                guard
-                    let length = readNumber(from: &input),
-                    length >= 1 && length <= 64
-                else {
+            case "P":
+                guard let length = readNumber(from: &input) else {
                     throw LexerError.invalidRest
                 }
                 
@@ -94,10 +75,7 @@ struct MMLLexer {
             
             // Tempo
             case "T":
-                guard
-                    let tempo = readNumber(from: &input),
-                    tempo >= 32 && tempo <= 255
-                else {
+                guard let tempo = readNumber(from: &input) else {
                     throw LexerError.invalidTempo
                 }
                 
@@ -172,9 +150,6 @@ struct MMLLexer {
 extension MMLLexer {
     /// An error that occurs when lexing a MML command string.
     enum LexerError: Error {
-        /// An indication that there is an invalid music command.
-        case invalidMusic
-        
         /// An indication that there is an invalid note length.
         case invalidNoteLength
         

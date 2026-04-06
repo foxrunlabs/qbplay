@@ -2,7 +2,7 @@ import Accelerate
 import Foundation
 
 /// A representation of a musical note.
-struct Note {
+struct Note: MusicEvent {
     let pitch: Pitch
     let duration: TimeInterval
     let articulation: Articulation
@@ -41,9 +41,6 @@ struct Note {
     
     // MARK: - Methods
     
-    /// Calculate waveform samples representing the note for a given sampling rate.
-    /// - Parameter sampleRate: Sampling rate in Hertz.
-    /// - Returns: An array of samples representing the note.
     func samples(sampleRate: Hertz) -> [Float] {
         // Compute total samples, note samples, and rest samples based on articulation
         let totalCount = Int(sampleRate * duration)

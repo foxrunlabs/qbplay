@@ -25,7 +25,7 @@ struct MMLInterpreter {
                     articulation: state.articulation
                 )
                 
-                events.append(.note(note))
+                events.append(note)
             
             // Note length
             case .noteLength(let length):
@@ -35,7 +35,7 @@ struct MMLInterpreter {
             case .numberedNote(let number, let dots):
                 if number == 0 {
                     let rest = Rest(tempo: state.tempo, length: state.noteLength, dots: dots)
-                    events.append(.rest(rest))
+                    events.append(rest)
                 } else {
                     let pitch = try Pitch(noteNumber: number)
                     let note = Note(
@@ -46,7 +46,7 @@ struct MMLInterpreter {
                         articulation: state.articulation
                     )
                     
-                    events.append(.note(note))
+                    events.append(note)
                 }
             
             // Octave
@@ -64,7 +64,7 @@ struct MMLInterpreter {
             // Rest
             case .rest(let length, let dots):
                 let rest = Rest(tempo: state.tempo, length: length, dots: dots)
-                events.append(.rest(rest))
+                events.append(rest)
             
             // Tempo
             case .tempo(let tempo):

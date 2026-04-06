@@ -1,7 +1,7 @@
 import Foundation
 
 /// A representation of a rest.
-struct Rest {
+struct Rest: MusicEvent {
     let duration: TimeInterval
     
     // MARK: - Initializers
@@ -26,9 +26,6 @@ struct Rest {
     
     // MARK: - Methods
     
-    /// Calculate waveform samples representing the rest for a given sampling rate.
-    /// - Parameter sampleRate: Sampling rate in Hertz.
-    /// - Returns: An array of samples representing the rest.
     func samples(sampleRate: Hertz) -> [Float] {
         let count = Int(sampleRate * duration)
         return Array(repeating: 0.0, count: count)

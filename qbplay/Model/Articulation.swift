@@ -13,12 +13,11 @@ enum Articulation: Double, CustomStringConvertible {
     var description: String {
         switch self {
         case .staccato:
-            "Staccato"
-        
+            "S"
         case .normal:
-            "Normal"
+            "N"
         case .legato:
-            "Legato"
+            "L"
         }
     }
 }

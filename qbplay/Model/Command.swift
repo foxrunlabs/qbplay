@@ -1,5 +1,5 @@
 /// Music Macro Language commands.
-enum MMLCommand {
+enum MMLCommand: CustomStringConvertible {
     /// Set articulation of each note.
     /// - Parameters:
     ///     - articulation: The playing technique for all following notes.
@@ -47,4 +47,31 @@ enum MMLCommand {
     /// - Parameters:
     ///     - tempo: A value in the range of 32 to 255 representing the number of quarter notes per minute.
     case tempo(_ tempo: Int)
+}
+
+
+// MARK: - CustomStringConvertible
+extension MMLCommand {
+    var description: String {
+        switch self {
+        case .articulation(let articulation):
+            "M\(articulation)"
+        case .namedNote(let name, accidental: let accidental, length: let length, dots: let dots):
+            "\(name)\(accidental)\(length, default: "")" + String(repeating: ".", count: dots)
+        case .noteLength(let length):
+            "L\(length)"
+        case .numberedNote(let number, dots: let dots):
+            "N\(number)" + String(repeating: ".", count: dots)
+        case .octave(let octave):
+            "O\(octave)"
+        case .octaveDown:
+            "<"
+        case .octaveUp:
+            ">"
+        case .rest(let length, dots: let dots):
+            "P\(length)" + String(repeating: ".", count: dots)
+        case .tempo(let tempo):
+            "T\(tempo)"
+        }
+    }
 }

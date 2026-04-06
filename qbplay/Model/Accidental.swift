@@ -13,11 +13,11 @@ enum Accidental: Int, CustomStringConvertible {
     var description: String {
         switch self {
         case .flat:
-            "♭"
+            "-"
         case .none:
             ""
         case .sharp:
-            "♯"
+            "+"
         }
     }
 }

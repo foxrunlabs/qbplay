@@ -40,10 +40,13 @@ struct Note: MusicEvent {
     }
     
     // MARK: - Methods
+    func sampleCount(sampleRate: Hertz) -> Int {
+        Int((duration * sampleRate).rounded())
+    }
     
     func samples(sampleRate: Hertz) -> [Float] {
         // Compute total samples, note samples, and rest samples based on articulation
-        let totalCount = Int(sampleRate * duration)
+        let totalCount = sampleCount(sampleRate: sampleRate)
         let noteCount = Int(Double(totalCount) * articulation.rawValue)
         let restCount = totalCount - noteCount
         
@@ -75,8 +78,8 @@ struct Note: MusicEvent {
         sampleRate: Hertz
     ) {
         // Calculate number of samples for attack and sustain.
-        let attackCount = min(Int(sampleRate * attack), waveform.count / 2)
-        let releaseCount = min(Int(sampleRate * release), waveform.count / 2)
+        let attackCount = min(Int((sampleRate * attack).rounded()), waveform.count / 2)
+        let releaseCount = min(Int((sampleRate * release).rounded()), waveform.count / 2)
         
         // Apply the attack as applicable.
         if attackCount > 0 {
@@ -93,7 +96,7 @@ struct Note: MusicEvent {
             )
         }
         
-        // Apply the decay as applicable.
+        // Apply the release as applicable.
         if releaseCount > 0 {
             let releaseEnvelope = vDSP.ramp(
                 withInitialValue: 1.0,

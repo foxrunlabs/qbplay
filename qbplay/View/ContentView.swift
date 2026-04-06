@@ -53,7 +53,7 @@ struct ContentView: View {
                 let samples = AudioRenderer.render(events, sampleRate: player.format.sampleRate)
                 try player.play(samples)
             } catch {
-                
+                print(error)
             }
         }
     }

@@ -5,21 +5,22 @@ struct MMLLexer {
     /// - Returns: A sequence of MML commands.
     /// - Throws: If there is an error lexing, this method throws a LexerError or PitchError.
     static func lex(_ tune: String) throws -> [MMLCommand] {
-        // Remove any whitespace in the string and convert to uppercase
-        var input = Array(tune.filter { !$0.isWhitespace }.uppercased())[...]
+        // Remove any whitespace in the string and convert to lowercase
+        var input = Array(tune.filter { !$0.isWhitespace }.lowercased())[...]
         var output: [MMLCommand] = []
         
         while let c = input.popFirst() {
             switch c {
             // Named note
-            case "A"..."G":
+            case "a"..."g":
+                guard let name = NoteName(rawValue: c) else { throw LexerError.invalidNoteName }
                 let accidental = readAccidental(from: &input)
                 let length = readNumber(from: &input)
                 let dots = readDots(from: &input)
-                output.append(.namedNote(c, accidental: accidental, length: length, dots: dots))
+                output.append(.namedNote(name, accidental: accidental, length: length, dots: dots))
             
             // Note length
-            case "L":
+            case "l":
                 guard let length = readNumber(from: &input) else {
                     throw LexerError.invalidNoteLength
                 }
@@ -27,7 +28,7 @@ struct MMLLexer {
                 output.append(.noteLength(length))
             
             // Articulation
-            case "M":
+            case "m":
                 guard let music = input.popFirst() else { throw LexerError.invalidArticulation }
                 let articulation: Articulation
                 
@@ -48,7 +49,7 @@ struct MMLLexer {
                 output.append(.articulation(articulation))
             
             // Numbered note
-            case "N":
+            case "n":
                 guard let number = readNumber(from: &input) else {
                     throw LexerError.invalidNumberedNote
                 }
@@ -57,7 +58,7 @@ struct MMLLexer {
                 output.append(.numberedNote(number, dots: dots))
             
             // Octave
-            case "O":
+            case "o":
                 guard let octave = readNumber(from: &input) else {
                     throw LexerError.invalidOctave
                 }
@@ -65,7 +66,7 @@ struct MMLLexer {
                 output.append(.octave(octave))
             
             // Rest
-            case "P":
+            case "p":
                 guard let length = readNumber(from: &input) else {
                     throw LexerError.invalidRest
                 }
@@ -74,7 +75,7 @@ struct MMLLexer {
                 output.append(.rest(length: length, dots: dots))
             
             // Tempo
-            case "T":
+            case "t":
                 guard let tempo = readNumber(from: &input) else {
                     throw LexerError.invalidTempo
                 }
@@ -152,6 +153,9 @@ extension MMLLexer {
     enum LexerError: Error {
         /// An indication that there is an invalid note length.
         case invalidNoteLength
+        
+        /// An indication that there is an invalid note name.
+        case invalidNoteName
         
         /// An indication that there is an invalid numbered note.
         case invalidNumberedNote

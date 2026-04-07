@@ -10,7 +10,7 @@ enum MMLCommand: CustomStringConvertible {
     ///     - accidental: The accidental symbol for the note.
     ///     - length: An optional value in the range of 1 to 64 representing the length of the note.
     ///     - dots: A value representing the number of sustain dots for the note.
-    case namedNote(_ name: Character, accidental: Accidental, length: Int?, dots: Int)
+    case namedNote(_ name: NoteName, accidental: Accidental, length: Int?, dots: Int)
     
     /// Set the length of each note.
     /// - Parameter length: A value in the range of 1 to 64 representing the length of each note. A value of 1 represents a whole

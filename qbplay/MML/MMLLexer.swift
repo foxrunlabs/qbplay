@@ -6,14 +6,17 @@ struct MMLLexer {
     /// - Throws: If there is an error lexing, this method throws a LexerError or PitchError.
     static func lex(_ tune: String) throws -> [MMLCommand] {
         // Remove any whitespace in the string and convert to lowercase
-        var input = Array(tune.filter { !$0.isWhitespace }.lowercased())[...]
+        var input = Array(tune.lowercased())[...]
         var output: [MMLCommand] = []
         
         while let c = input.popFirst() {
             switch c {
             // Named note
             case "a"..."g":
-                guard let name = NoteName(rawValue: c) else { throw LexerError.invalidNoteName }
+                guard let name = NoteName(rawValue: c) else {
+                    throw MMLError.invalidCommand(c, column: input.startIndex)
+                }
+                
                 let accidental = readAccidental(from: &input)
                 let length = readNumber(from: &input)
                 let dots = readDots(from: &input)
@@ -22,28 +25,32 @@ struct MMLLexer {
             // Note length
             case "l":
                 guard let length = readNumber(from: &input) else {
-                    throw LexerError.invalidNoteLength
+                    throw MMLError.invalidCommand(c, column: input.startIndex)
                 }
                 
                 output.append(.noteLength(length))
             
             // Articulation
             case "m":
-                guard let music = input.popFirst() else { throw LexerError.invalidArticulation }
+                guard let music = input.popFirst() else {
+                    throw MMLError.invalidCommand(c, column: input.startIndex)
+                }
+                
                 let articulation: Articulation
                 
                 switch music {
-                case "B", "F":
+                case "b", "f":
                     // These represent background and foreground in QBasic. We can ignore them.
                     continue
-                case "L":
+                case "l":
                     articulation = .legato
-                case "N":
+                case "n":
                     articulation = .normal
-                case "S":
+                case "s":
                     articulation = .staccato
                 default:
-                    throw LexerError.invalidArticulation
+                    // Already popped the second character, so adjust column to M command.
+                    throw MMLError.invalidCommand(c, column: input.startIndex - 1)
                 }
                 
                 output.append(.articulation(articulation))
@@ -51,7 +58,7 @@ struct MMLLexer {
             // Numbered note
             case "n":
                 guard let number = readNumber(from: &input) else {
-                    throw LexerError.invalidNumberedNote
+                    throw MMLError.invalidCommand(c, column: input.startIndex)
                 }
                 
                 let dots = readDots(from: &input)
@@ -60,7 +67,7 @@ struct MMLLexer {
             // Octave
             case "o":
                 guard let octave = readNumber(from: &input) else {
-                    throw LexerError.invalidOctave
+                    throw MMLError.invalidCommand(c, column: input.startIndex)
                 }
                 
                 output.append(.octave(octave))
@@ -68,7 +75,7 @@ struct MMLLexer {
             // Rest
             case "p":
                 guard let length = readNumber(from: &input) else {
-                    throw LexerError.invalidRest
+                    throw MMLError.invalidCommand(c, column: input.startIndex)
                 }
                 
                 let dots = readDots(from: &input)
@@ -77,7 +84,7 @@ struct MMLLexer {
             // Tempo
             case "t":
                 guard let tempo = readNumber(from: &input) else {
-                    throw LexerError.invalidTempo
+                    throw MMLError.invalidCommand(c, column: input.startIndex)
                 }
                 
                 output.append(.tempo(tempo))
@@ -90,9 +97,13 @@ struct MMLLexer {
             case ">":
                 output.append(.octaveUp)
             
+            // Skip whitespace. Not filtered from input in order to preserve indices.
+            case let c where c.isWhitespace:
+                continue
+            
             // Unknown command
             default:
-                throw LexerError.unknownCommand
+                throw MMLError.invalidCommand(c, column: input.startIndex)
             }
         }
         
@@ -146,33 +157,3 @@ struct MMLLexer {
     }
 }
 
-
-// MARK: - Lexer Error
-extension MMLLexer {
-    /// An error that occurs when lexing a MML command string.
-    enum LexerError: Error {
-        /// An indication that there is an invalid note length.
-        case invalidNoteLength
-        
-        /// An indication that there is an invalid note name.
-        case invalidNoteName
-        
-        /// An indication that there is an invalid numbered note.
-        case invalidNumberedNote
-        
-        /// An indication that there is an invalid octave.
-        case invalidOctave
-        
-        /// An indication that there is an invalid rest.
-        case invalidRest
-        
-        /// An indication that there is an invalid articulation.
-        case invalidArticulation
-        
-        /// An indication that there is an invalid tempo.
-        case invalidTempo
-        
-        /// An indication that there is an unknown MML command.
-        case unknownCommand
-    }
-}

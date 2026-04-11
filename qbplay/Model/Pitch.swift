@@ -46,7 +46,9 @@ struct Pitch: CustomStringConvertible {
     /// Create a pitch for a numbered note.
     /// - Parameter noteNumber: A value in the range of 1 to 84 that represents a note. A value of 1 represents C0.
     init(noteNumber: Int) throws {
-        guard noteNumber >= 1 && noteNumber <= 84 else { throw PitchError.invalidNoteNumber }
+        guard noteNumber >= 1 && noteNumber <= 84 else {
+            throw MMLError.invalidNumberedNote(noteNumber)
+        }
         
         // The numbered note MML command uses a value of 0 to represent a rest.
         let semitone = noteNumber - 1
@@ -59,16 +61,6 @@ struct Pitch: CustomStringConvertible {
         // Pitch is computed using A4 as a reference.
         // pitch = (440 Hz) * 2 ^ ((semitone - A4) / 12)
         self.frequency = 440.0 * pow(2.0, Double(semitone - Self.a4Semitone) / 12.0)
-    }
-}
-
-
-// MARK: - Pitch Error
-extension Pitch {
-    /// An error that occurs during the creation of a pitch.
-    enum PitchError: Error {
-        /// An indication that the note number is invalid.
-        case invalidNoteNumber
     }
 }
 

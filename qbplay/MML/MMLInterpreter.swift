@@ -22,7 +22,7 @@ struct MMLInterpreter {
             // Named note
             case .namedNote(let name, let accidental, let length, let dots):
                 if let length, length < 1 || length > maxLength {
-                    throw InterpreterError.invalidLength(length)
+                    throw MMLError.invalidLength(length)
                 }
                 
                 let pitch = try Pitch(name: name, accidental: accidental, octave: state.octave)
@@ -38,14 +38,12 @@ struct MMLInterpreter {
             
             // Note length
             case .noteLength(let length):
-                if length < 1 || length > maxLength { throw InterpreterError.invalidLength(length) }
+                if length < 1 || length > maxLength { throw MMLError.invalidLength(length) }
                 state.noteLength = length
             
             // Numbered note, or rest if number is 0.
             case .numberedNote(let number, let dots):
-                if number < 0 || number > maxNote {
-                    throw InterpreterError.invalidNumberedNote(number)
-                }
+                if number < 0 || number > maxNote { throw MMLError.invalidNumberedNote(number) }
                 
                 if number == 0 {
                     let rest = Rest(tempo: state.tempo, length: state.noteLength, dots: dots)
@@ -65,7 +63,7 @@ struct MMLInterpreter {
             
             // Octave
             case .octave(let octave):
-                if octave < 0 || octave > maxOctave { throw InterpreterError.invalidOctave(octave) }
+                if octave < 0 || octave > maxOctave { throw MMLError.invalidOctave(octave) }
                 state.octave = octave
             
             // Shift octave down
@@ -78,13 +76,13 @@ struct MMLInterpreter {
             
             // Rest
             case .rest(let length, let dots):
-                if length < 1 || length > maxLength { throw InterpreterError.invalidLength(length) }
+                if length < 1 || length > maxLength { throw MMLError.invalidLength(length) }
                 let rest = Rest(tempo: state.tempo, length: length, dots: dots)
                 events.append(rest)
             
             // Tempo
             case .tempo(let tempo):
-                if tempo < 32 || tempo > maxTempo { throw InterpreterError.invalidTempo(tempo) }
+                if tempo < 32 || tempo > maxTempo { throw MMLError.invalidTempo(tempo) }
                 state.tempo = tempo
             }
         }
@@ -109,28 +107,5 @@ extension MMLInterpreter {
         
         /// Tempo for each note in quarter notes per minute. Default is 120.
         var tempo: Int = 120
-    }
-}
-
-
-// MARK: - Interpreter Error
-extension MMLInterpreter {
-    /// An error that occurs when interpreting MML commands.
-    enum InterpreterError: Error {
-        /// An indication that there is an invalid note length.
-        /// - Parameter length: Note length.
-        case invalidLength(_ length: Int)
-        
-        /// An indication that there is an invalid numbered note.
-        /// - Parameter number: Note number.
-        case invalidNumberedNote(_ number: Int)
-        
-        /// An indication that there is an invalid octave.
-        /// - Parameter octave: Octave number.
-        case invalidOctave(_ octave: Int)
-        
-        /// An indication that there is an invalid tempo.
-        /// - Parameter tempo: Tempo number.
-        case invalidTempo(_ tempo: Int)
     }
 }

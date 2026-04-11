@@ -52,8 +52,15 @@ struct ContentView: View {
                 let events = try MMLInterpreter.interpret(commands)
                 let samples = AudioRenderer.render(events, sampleRate: player.format.sampleRate)
                 try player.play(samples)
+            } catch let error as LocalizedError {
+                print(
+                    error.localizedDescription,
+                    error.failureReason ?? "No reason given.",
+                    error.recoverySuggestion ?? "No recovery suggested.",
+                    separator: "\n"
+                )
             } catch {
-                print(error)
+                print(error.localizedDescription)
             }
         }
     }

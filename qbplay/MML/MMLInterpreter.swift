@@ -16,16 +16,21 @@ struct MMLInterpreter {
         for command in commands {
             switch command {
             // Articulation
-            case .articulation(let articulation):
+            case let .articulation(articulation):
                 state.articulation = articulation
             
             // Named note
-            case .namedNote(let name, let accidental, let length, let dots):
+            case let .namedNote(pitchClass, accidental, length, dots):
                 if let length, length < 1 || length > maxLength {
                     throw MMLError.invalidLength(length)
                 }
                 
-                let pitch = try Pitch(name: name, accidental: accidental, octave: state.octave)
+                let pitch = try Pitch(
+                    pitchClass: pitchClass,
+                    accidental: accidental,
+                    octave: state.octave
+                )
+                
                 let note = Note(
                     pitch: pitch,
                     tempo: state.tempo,
@@ -37,12 +42,12 @@ struct MMLInterpreter {
                 events.append(note)
             
             // Note length
-            case .noteLength(let length):
+            case let .noteLength(length):
                 if length < 1 || length > maxLength { throw MMLError.invalidLength(length) }
                 state.noteLength = length
             
             // Numbered note, or rest if number is 0.
-            case .numberedNote(let number, let dots):
+            case let .numberedNote(number, dots):
                 if number < 0 || number > maxNote { throw MMLError.invalidNumberedNote(number) }
                 
                 if number == 0 {
@@ -62,7 +67,7 @@ struct MMLInterpreter {
                 }
             
             // Octave
-            case .octave(let octave):
+            case let .octave(octave):
                 if octave < 0 || octave > maxOctave { throw MMLError.invalidOctave(octave) }
                 state.octave = octave
             
@@ -75,13 +80,13 @@ struct MMLInterpreter {
                 state.octave = min(state.octave + 1, maxOctave)
             
             // Rest
-            case .rest(let length, let dots):
+            case let .rest(length, dots):
                 if length < 1 || length > maxLength { throw MMLError.invalidLength(length) }
                 let rest = Rest(tempo: state.tempo, length: length, dots: dots)
                 events.append(rest)
             
             // Tempo
-            case .tempo(let tempo):
+            case let .tempo(tempo):
                 if tempo < 32 || tempo > maxTempo { throw MMLError.invalidTempo(tempo) }
                 state.tempo = tempo
             }

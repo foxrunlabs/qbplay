@@ -12,12 +12,9 @@ enum Articulation: Double, CustomStringConvertible {
     // MARK: - CustomStringConvertible
     var description: String {
         switch self {
-        case .staccato:
-            "S"
-        case .normal:
-            "N"
-        case .legato:
-            "L"
+        case .staccato: "S"
+        case .normal: "N"
+        case .legato: "L"
         }
     }
 }

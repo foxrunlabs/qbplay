@@ -6,11 +6,11 @@ enum MMLCommand: CustomStringConvertible {
     
     /// Play a named note.
     /// - Parameters:
-    ///     - name: A value in the range A to G representing the note.
+    ///     - pitchClass: A value in the range A to G representing the pitch class.
     ///     - accidental: The accidental symbol for the note.
     ///     - length: An optional value in the range of 1 to 64 representing the length of the note.
     ///     - dots: A value representing the number of sustain dots for the note.
-    case namedNote(_ name: NoteName, accidental: Accidental, length: Int?, dots: Int)
+    case namedNote(_ pitchClass: PitchClass, accidental: Accidental, length: Int?, dots: Int)
     
     /// Set the length of each note.
     /// - Parameter length: A value in the range of 1 to 64 representing the length of each note. A value of 1 represents a whole
@@ -51,23 +51,23 @@ enum MMLCommand: CustomStringConvertible {
 extension MMLCommand {
     var description: String {
         switch self {
-        case .articulation(let articulation):
+        case let .articulation(articulation):
             "M\(articulation)"
-        case .namedNote(let name, accidental: let accidental, length: let length, dots: let dots):
-            "\(name)\(accidental)\(length, default: "")" + String(repeating: ".", count: dots)
-        case .noteLength(let length):
+        case let .namedNote(pitchClass, accidental: accidental, length: length, dots: dots):
+            "\(pitchClass)\(accidental)\(length, default: "")" + String(repeating: ".", count: dots)
+        case let .noteLength(length):
             "L\(length)"
-        case .numberedNote(let number, dots: let dots):
+        case let .numberedNote(number, dots: dots):
             "N\(number)" + String(repeating: ".", count: dots)
-        case .octave(let octave):
+        case let .octave(octave):
             "O\(octave)"
         case .octaveDown:
             "<"
         case .octaveUp:
             ">"
-        case .rest(let length, dots: let dots):
+        case let .rest(length, dots: dots):
             "P\(length)" + String(repeating: ".", count: dots)
-        case .tempo(let tempo):
+        case let .tempo(tempo):
             "T\(tempo)"
         }
     }

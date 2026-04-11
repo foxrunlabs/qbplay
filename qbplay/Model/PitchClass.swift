@@ -1,5 +1,5 @@
-/// Musical note names.
-enum NoteName: Character, CustomStringConvertible {
+/// Musical pitch classes.
+enum PitchClass: Character, CustomStringConvertible {
     case c = "c"
     case d = "d"
     case e = "e"

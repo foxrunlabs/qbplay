@@ -13,14 +13,16 @@ struct MMLLexer {
             switch c {
             // Named note
             case "a"..."g":
-                guard let name = NoteName(rawValue: c) else {
+                guard let pitchClass = PitchClass(rawValue: c) else {
                     throw MMLError.invalidCommand(c, column: input.startIndex)
                 }
                 
                 let accidental = readAccidental(from: &input)
                 let length = readNumber(from: &input)
                 let dots = readDots(from: &input)
-                output.append(.namedNote(name, accidental: accidental, length: length, dots: dots))
+                output.append(
+                    .namedNote(pitchClass, accidental: accidental, length: length, dots: dots)
+                )
             
             // Note length
             case "l":
@@ -118,13 +120,9 @@ struct MMLLexer {
         input.removeFirst()
         
         return switch c {
-        case "#", "+":
-            .sharp
-        case "-":
-            .flat
-        default:
-            // We should never get here.
-            .none
+        case "#", "+": .sharp
+        case "-": .flat
+        default: .none
         }
     }
     

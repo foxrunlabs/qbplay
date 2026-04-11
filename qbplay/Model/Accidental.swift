@@ -12,12 +12,9 @@ enum Accidental: Int, CustomStringConvertible {
     // MARK: - Custom String Convertible
     var description: String {
         switch self {
-        case .flat:
-            "-"
-        case .none:
-            ""
-        case .sharp:
-            "+"
+        case .flat: "-"
+        case .none: ""
+        case .sharp: "+"
         }
     }
 }

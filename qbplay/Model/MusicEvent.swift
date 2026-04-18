@@ -5,11 +5,6 @@ protocol MusicEvent {
     /// Duration of the music event in seconds.
     var duration: TimeInterval { get }
     
-    /// Calculate total number of waveform samples.
-    /// - Parameter sampleRate: Sampling rate in Hertz.
-    /// - Returns: Number of waveform samples..
-    func sampleCount(sampleRate: Hertz) -> Int
-    
     /// Calculate waveform samples representing the music event for a given sampling rate.
     /// - Parameter sampleRate: Sampling rate in Hertz.
     /// - Returns: An array of samples representing the music event.

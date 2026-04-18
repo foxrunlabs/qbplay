@@ -25,11 +25,8 @@ struct Rest: MusicEvent {
     }
     
     // MARK: - Methods
-    func sampleCount(sampleRate: Hertz) -> Int {
-        Int((sampleRate * duration).rounded())
-    }
-    
     func samples(sampleRate: Hertz) -> [Float] {
-        Array(repeating: 0.0, count: sampleCount(sampleRate: sampleRate))
+        let count = Int((sampleRate * duration).rounded())
+        return Array(repeating: 0.0, count: count)
     }
 }

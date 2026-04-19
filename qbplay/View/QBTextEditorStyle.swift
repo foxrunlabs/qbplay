@@ -5,12 +5,12 @@ struct QBTextEditorStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(.vertical, 4)
-            .border(.vgaLightGray, width: 1)
+            .border(.vgaWhite, width: 1)
             .scrollContentBackground(.hidden)
             .background(.vgaBlue)
             .font(.custom("Px437 IBM VGA 9x16", size: 16))
-            .foregroundStyle(.vgaLightGray)
-            .tint(.vgaLightGray)
+            .foregroundStyle(.vgaWhite)
+            .tint(.vgaWhite)
     }
 }
 

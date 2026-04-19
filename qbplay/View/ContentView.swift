@@ -19,7 +19,7 @@ struct ContentView: View {
                     .foregroundStyle(.vgaBlack)
             }
             .frame(maxWidth: .infinity)
-            .background(.vgaLightGray)
+            .background(.vgaWhite)
             
             TextEditor(text: $tune)
                 .qbasicTextEditorStyle()

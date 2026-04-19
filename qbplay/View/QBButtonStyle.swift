@@ -8,7 +8,7 @@ struct QBButtonStyle: ButtonStyle {
         let foregroundColor: Color = if isEnabled {
             configuration.isPressed ? .vgaCyan : .vgaBrightWhite
         } else {
-            .vgaLightGray
+            .vgaWhite
         }
         
         configuration.label

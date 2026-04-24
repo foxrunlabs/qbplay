@@ -1,9 +1,25 @@
 /// An object that interprets MML commands.
 struct MMLInterpreter {
-    private static let maxOctave = 6
-    private static let maxLength = 64
-    private static let maxNote = 84
-    private static let maxTempo = 255
+    /// State of the MML interpreter, representing note length, articulation, octave, and tempo.
+    struct State {
+        /// Length of each note. Default is `4`, representing a quarter note.
+        var noteLength: Int = 4
+        
+        /// Articulation of each note. Default is `normal`.
+        var articulation: Articulation = .normal
+        
+        /// Octave for each note. Default is `6`, which represents QBasic octave `4`.
+        var octave: Int = 6
+        
+        /// Tempo for each note in quarter notes per minute. Default is `120`.
+        var tempo: Int = 120
+    }
+    
+    // MARK: - Properties
+    private static let validOctaveRange = 0...6
+    private static let validLengthRange = 1...64
+    private static let validNoteRange = 0...84
+    private static let validTempoRange = 32...255
     
     /// Interpret MML commands..
     /// - Parameter commands: A sequence of MML commands.
@@ -21,96 +37,98 @@ struct MMLInterpreter {
             
             // Named note
             case let .namedNote(pitchClass, accidental, length, dots):
-                if let length, length < 1 || length > maxLength {
-                    throw MMLError.invalidLength(length)
+                if let length, !Self.validLengthRange.contains(length) {
+                    throw MMLError.invalidNamedNote
                 }
                 
-                let pitch = try Pitch(
-                    pitchClass: pitchClass,
-                    accidental: accidental,
-                    octave: state.octave
-                )
-                
-                let note = Note(
-                    pitch: pitch,
-                    tempo: state.tempo,
-                    length: length ?? state.noteLength,
-                    dots: dots,
-                    articulation: state.articulation
-                )
+                guard
+                    let pitch = Pitch(
+                        pitchClass: pitchClass,
+                        accidental: accidental,
+                        octave: state.octave
+                    ),
+                    let note = Note(
+                        pitch: pitch,
+                        tempo: state.tempo,
+                        length: length ?? state.noteLength,
+                        dots: dots,
+                        articulation: state.articulation
+                    )
+                else {
+                    throw MMLError.invalidNamedNote
+                }
                 
                 events.append(note)
             
             // Note length
             case let .noteLength(length):
-                if length < 1 || length > maxLength { throw MMLError.invalidLength(length) }
+                guard Self.validLengthRange.contains(length) else { throw MMLError.invalidLength }
                 state.noteLength = length
             
-            // Numbered note, or rest if number is 0.
+            // Numbered note, or rest if number is `0`.
             case let .numberedNote(number, dots):
-                if number < 0 || number > maxNote { throw MMLError.invalidNumberedNote(number) }
+                guard Self.validNoteRange.contains(number) else {
+                    throw MMLError.invalidNumberedNote
+                }
                 
                 if number == 0 {
-                    let rest = Rest(tempo: state.tempo, length: state.noteLength, dots: dots)
+                    guard
+                        let rest = Rest(tempo: state.tempo, length: state.noteLength, dots: dots)
+                    else {
+                        throw MMLError.invalidNumberedNote
+                    }
+                    
                     events.append(rest)
                 } else {
-                    let pitch = try Pitch(noteNumber: number)
-                    let note = Note(
-                        pitch: pitch,
-                        tempo: state.tempo,
-                        length: state.noteLength,
-                        dots: dots,
-                        articulation: state.articulation
-                    )
+                    let qbasicNoteNumber = number + 15  // QBasic is two octaves higher than normal
+                    
+                    guard
+                        let pitch = Pitch(noteNumber: qbasicNoteNumber),
+                        let note = Note(
+                            pitch: pitch,
+                            tempo: state.tempo,
+                            length: state.noteLength,
+                            dots: dots,
+                            articulation: state.articulation
+                        )
+                    else {
+                        throw MMLError.invalidNumberedNote
+                    }
                     
                     events.append(note)
                 }
             
             // Octave
             case let .octave(octave):
-                if octave < 0 || octave > maxOctave { throw MMLError.invalidOctave(octave) }
-                state.octave = octave
+                guard Self.validOctaveRange.contains(octave) else { throw MMLError.invalidOctave }
+                state.octave = octave + 2   // QBasic is 2 octaves higher than normal
             
             // Shift octave down
             case .octaveDown:
-                state.octave = max(0, state.octave - 1)
+                state.octave = max(Self.validOctaveRange.lowerBound, state.octave - 1)
             
             // Shift octave up
             case .octaveUp:
-                state.octave = min(state.octave + 1, maxOctave)
+                state.octave = min(state.octave + 1, Self.validOctaveRange.upperBound + 2)
             
             // Rest
             case let .rest(length, dots):
-                if length < 1 || length > maxLength { throw MMLError.invalidLength(length) }
-                let rest = Rest(tempo: state.tempo, length: length, dots: dots)
+                guard
+                    Self.validLengthRange.contains(length),
+                    let rest = Rest(tempo: state.tempo, length: length, dots: dots)
+                else {
+                    throw MMLError.invalidRest
+                }
+                
                 events.append(rest)
             
             // Tempo
             case let .tempo(tempo):
-                if tempo < 32 || tempo > maxTempo { throw MMLError.invalidTempo(tempo) }
+                guard Self.validTempoRange.contains(tempo) else { throw MMLError.invalidTempo }
                 state.tempo = tempo
             }
         }
         
         return events
-    }
-}
-
-
-// MARK: - Interpreter State
-extension MMLInterpreter {
-    /// State of the MML interpreter, representing note length, articulation, octave, and tempo.
-    struct State {
-        /// Length of each note. Default is 4, representing a quarter note.
-        var noteLength: Int = 4
-        
-        /// Articulation of each note. Default is `normal`.
-        var articulation: Articulation = .normal
-        
-        /// Octave for each note. Default is 4.
-        var octave: Int = 4
-        
-        /// Tempo for each note in quarter notes per minute. Default is 120.
-        var tempo: Int = 120
     }
 }

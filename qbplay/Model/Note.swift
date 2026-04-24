@@ -6,23 +6,34 @@ struct Note: MusicEvent {
     let pitch: Pitch
     let duration: TimeInterval
     
+    private static let validTempoRange = 32...255
+    private static let validLengthRange = 1...64
+    
     // MARK: - Initializer
     
     /// Creates a note.
     /// - Parameters:
     ///   - pitch: Pitch of the note.
-    ///   - tempo: A value in the range of 32 to 255 representing the number of quarter notes per minute.
-    ///   - length: A value in the range of 1 to 64 representing the length of the note. A value of 1 represents a whole note, 2 is a
-    ///     half note, 4 is a quarter note, and so on.
+    ///   - tempo: A value in the range of `32...255` representing the number of quarter notes per minute.
+    ///   - length: A value in the range of `1...64` representing the length of the note. `1` represents a whole note, `2` is a
+    ///     half note, `4` is a quarter note, and so on.
     ///   - dots: A value representing the number of sustain dots for the note.
     ///   - articulation: The playing technique for the note.
-    init(
+    /// - Returns: A new `Note` instance, or `nil` if it's not possible.
+    init?(
         pitch: Pitch,
         tempo: Int,
         length: Int,
         dots: Int,
         articulation: Articulation
     ) {
+        guard
+            Self.validTempoRange.contains(tempo),
+            Self.validLengthRange.contains(length)
+        else {
+            return nil
+        }
+        
         self.pitch = pitch
         
         // Sustain is computed from the number of dots, with the first dot representing an
@@ -34,24 +45,11 @@ struct Note: MusicEvent {
         // Duration of note is computed based on tempo of quarter notes per minute and a length
         // normalized based on 4/4 timing. For example, a whote note represented by a length of 1
         // with a tempo of 120 quarter notes per minute would have a length of 2 seconds.
-        self.duration = (60.0 / TimeInterval(tempo)) * (4.0 / TimeInterval(length)) * sustain * articulation.rawValue
+        self.duration = (60.0 / TimeInterval(tempo)) * (4.0 / TimeInterval(length)) * sustain *
+            articulation.rawValue
     }
     
     // MARK: - Methods
-    func samples(sampleRate: Hertz) -> [Float] {
-        let count = Int((sampleRate * duration).rounded())
-        
-        // Generate waveform of note, including rest based on articulation
-        let indices = vDSP.ramp(withInitialValue: Float.zero, increment: 1.0, count: count)
-        let phaseIncrement = Float(2.0 * Double.pi * pitch.frequency / sampleRate)
-        let phases = vDSP.multiply(phaseIncrement, indices)
-        var waveform: [Float] = vForce.sin(phases).map { $0 >= 0.0 ? 1.0 : -1.0 }
-        
-        // Apply ADSR envelope to minimize clicking
-        adsrEnvelope(attack: 0.005, release: 0.005, waveform: &waveform, sampleRate: sampleRate)
-        
-        return waveform
-    }
     
     /// Apply an attack, decay, sustain, release envelope to a waveform.
     ///
@@ -102,5 +100,25 @@ struct Note: MusicEvent {
                 result: &waveform[decayStart...]
             )
         }
+    }
+}
+
+
+// MARK: - Music Event
+extension Note {
+    func samples(sampleRate: Hertz) -> [Float] {
+        // FIXME: This does not account for rest time in a played note.
+        let count = Int((sampleRate * duration).rounded())
+        
+        // Generate waveform of note, including rest based on articulation
+        let indices = vDSP.ramp(withInitialValue: Float.zero, increment: 1.0, count: count)
+        let phaseIncrement = Float(2.0 * Double.pi * pitch.frequency / sampleRate)
+        let phases = vDSP.multiply(phaseIncrement, indices)
+        var waveform: [Float] = vForce.sin(phases).map { $0 >= 0.0 ? 1.0 : -1.0 }
+        
+        // Apply ADSR envelope to minimize clicking
+        adsrEnvelope(attack: 0.005, release: 0.005, waveform: &waveform, sampleRate: sampleRate)
+        
+        return waveform
     }
 }

@@ -4,14 +4,25 @@ import Foundation
 struct Rest: MusicEvent {
     let duration: TimeInterval
     
+    private static let validTempoRange = 32...255
+    private static let validLengthRange = 1...64
+    
     // MARK: - Initializers
     
     /// Creates a rest.
     /// - Parameters:
-    ///   - tempo: A value in the range of 32 to 255 representing the number of quarter notes per minute.
-    ///   - length: A value in the range of 1 to 64 representing the length of the rest.
+    ///   - tempo: A value in the range of `32...255` representing the number of quarter notes per minute.
+    ///   - length: A value in the range of `1...64` representing the length of the rest.
     ///   - dots: A value representing the number of sustain dots for the rest.
-    init(tempo: Int, length: Int, dots: Int) {
+    /// - Returns: A new `Rest` instance, or `nil` if it's not possible.
+    init?(tempo: Int, length: Int, dots: Int) {
+        guard
+            Self.validTempoRange.contains(tempo),
+            Self.validLengthRange.contains(length)
+        else {
+            return nil
+        }
+        
         // Sustain is computed from the number of dots, with the first dot representing an
         // additional half-length, and each subsequent dot adding a progressively halved values. For
         // example, one dot makes a rest 0.5 times as long, two dots makes a rest 0.75 times as
@@ -23,8 +34,11 @@ struct Rest: MusicEvent {
         // with a tempo of 120 quarter notes per minute would have a length of 2 seconds.
         self.duration = (60.0 / TimeInterval(tempo)) * (4.0 / TimeInterval(length)) * sustain
     }
-    
-    // MARK: - Methods
+}
+
+
+// MARK: - Music Event
+extension Rest {
     func samples(sampleRate: Hertz) -> [Float] {
         let count = Int((sampleRate * duration).rounded())
         return Array(repeating: 0.0, count: count)

@@ -26,8 +26,8 @@ enum MMLCommand: CustomStringConvertible {
     
     /// Set the current octave.
     /// - Parameter octave: A value in the range of 0 to 6 representing an octave for each note. Middle C is at the beginning of
-    /// octave 3.
-    case octave(_ octave: Int)
+    /// octave 2.
+    case octave(_ octave: Int) // TODO: HOW SHOULD THIS BE REPRESENTED FOR NORMAL OR QBASIC
     
     /// Shift the current octave down.
     case octaveDown

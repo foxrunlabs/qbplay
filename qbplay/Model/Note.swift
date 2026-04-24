@@ -45,10 +45,10 @@ struct Note: MusicEvent {
         // additional half-length, and each subsequent dot adding a progressively halved values. For
         // example, one dot makes a note 0.5 times as long, two dots makes a note 0.75 times as
         // long, three dots makes a note 0.875 times as long, and so on.
-        let sustain = 2.0 - pow(0.5, TimeInterval(dots))
+        let sustain = 2.0 - pow(0.5, Beat(dots))
         
         // Duration of the note in beats is computed based on 4/4 timing.
-        self.duration = (4.0 / TimeInterval(length)) * sustain
+        self.duration = (4.0 / Beat(length)) * sustain
     }
     
     // MARK: - Methods
@@ -111,21 +111,29 @@ extension Note {
     func samples(sampleRate: Hertz) -> [Float] {
         // Total time is based on tempo. For example a quarter note (one beat at 4/4 timing) at
         // 120 bpm tempo is 0.5 seconds long.
-        let totalTime = (60.0 / TimeInterval(tempo)) * duration
+        let totalTime = (60.0 / Beat(tempo)) * duration
         
         // Calculate count of total samples, audible note samples, and rest samples
         let totalCount = Int((sampleRate * totalTime).rounded())
         let noteCount = Int((Double(totalCount) * articulation.rawValue).rounded())
         let restCount = totalCount - noteCount
                 
-        // Generate waveform of note, including rest based on articulation
+        // Generate phase information for note
         let indices = vDSP.ramp(withInitialValue: Float.zero, increment: 1.0, count: noteCount)
         let phaseIncrement = Float(2.0 * Double.pi * pitch.frequency / sampleRate)
         let phases = vDSP.multiply(phaseIncrement, indices)
-        var waveform: [Float] = vForce.sin(phases).map { $0 >= 0.0 ? 0.25 : -0.25 }
+        
+        // Shape note from sine wave to closer to a square wave and adjust amplitude
+        let drive: Float = 7.0
+        let amplitude: Float = 0.20
+        
+        var waveform: [Float] = vForce.sin(phases)
+        vDSP.multiply(drive, waveform, result: &waveform)
+        vForce.tanh(waveform, result: &waveform)
+        vDSP.multiply(amplitude, waveform, result: &waveform)
         
         // Apply ADSR envelope to minimize clicking
-        adsrEnvelope(attack: 0.005, release: 0.005, waveform: &waveform, sampleRate: sampleRate)
+        adsrEnvelope(attack: 0.001, release: 0.0015, waveform: &waveform, sampleRate: sampleRate)
         
         return waveform + Array(repeating: 0.0, count: restCount)
     }

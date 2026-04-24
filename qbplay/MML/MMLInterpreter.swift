@@ -50,9 +50,9 @@ struct MMLInterpreter {
                     let note = Note(
                         pitch: pitch,
                         tempo: state.tempo,
+                        articulation: state.articulation,
                         length: length ?? state.noteLength,
-                        dots: dots,
-                        articulation: state.articulation
+                        dots: dots
                     )
                 else {
                     throw MMLError.invalidNamedNote
@@ -87,9 +87,9 @@ struct MMLInterpreter {
                         let note = Note(
                             pitch: pitch,
                             tempo: state.tempo,
+                            articulation: state.articulation,
                             length: state.noteLength,
-                            dots: dots,
-                            articulation: state.articulation
+                            dots: dots
                         )
                     else {
                         throw MMLError.invalidNumberedNote

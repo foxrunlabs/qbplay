@@ -4,7 +4,9 @@ import Foundation
 /// A representation of a musical note.
 struct Note: MusicEvent {
     let pitch: Pitch
-    let duration: TimeInterval
+    let tempo: Int
+    let articulation: Articulation
+    let duration: Beat
     
     private static let validTempoRange = 32...255
     private static let validLengthRange = 1...64
@@ -15,26 +17,29 @@ struct Note: MusicEvent {
     /// - Parameters:
     ///   - pitch: Pitch of the note.
     ///   - tempo: A value in the range of `32...255` representing the number of quarter notes per minute.
+    ///   - articulation: The playing technique for the note.
     ///   - length: A value in the range of `1...64` representing the length of the note. `1` represents a whole note, `2` is a
     ///     half note, `4` is a quarter note, and so on.
     ///   - dots: A value representing the number of sustain dots for the note.
-    ///   - articulation: The playing technique for the note.
     /// - Returns: A new `Note` instance, or `nil` if it's not possible.
     init?(
         pitch: Pitch,
         tempo: Int,
+        articulation: Articulation,
         length: Int,
-        dots: Int,
-        articulation: Articulation
+        dots: Int
     ) {
         guard
             Self.validTempoRange.contains(tempo),
-            Self.validLengthRange.contains(length)
+            Self.validLengthRange.contains(length),
+            dots >= 0
         else {
             return nil
         }
         
         self.pitch = pitch
+        self.tempo = tempo
+        self.articulation = articulation
         
         // Sustain is computed from the number of dots, with the first dot representing an
         // additional half-length, and each subsequent dot adding a progressively halved values. For
@@ -42,11 +47,8 @@ struct Note: MusicEvent {
         // long, three dots makes a note 0.875 times as long, and so on.
         let sustain = 2.0 - pow(0.5, TimeInterval(dots))
         
-        // Duration of note is computed based on tempo of quarter notes per minute and a length
-        // normalized based on 4/4 timing. For example, a whote note represented by a length of 1
-        // with a tempo of 120 quarter notes per minute would have a length of 2 seconds.
-        self.duration = (60.0 / TimeInterval(tempo)) * (4.0 / TimeInterval(length)) * sustain *
-            articulation.rawValue
+        // Duration of the note in beats is computed based on 4/4 timing.
+        self.duration = (4.0 / TimeInterval(length)) * sustain
     }
     
     // MARK: - Methods
@@ -107,18 +109,24 @@ struct Note: MusicEvent {
 // MARK: - Music Event
 extension Note {
     func samples(sampleRate: Hertz) -> [Float] {
-        // FIXME: This does not account for rest time in a played note.
-        let count = Int((sampleRate * duration).rounded())
+        // Total time is based on tempo. For example a quarter note (one beat at 4/4 timing) at
+        // 120 bpm tempo is 0.5 seconds long.
+        let totalTime = (60.0 / TimeInterval(tempo)) * duration
         
+        // Calculate count of total samples, audible note samples, and rest samples
+        let totalCount = Int((sampleRate * totalTime).rounded())
+        let noteCount = Int((Double(totalCount) * articulation.rawValue).rounded())
+        let restCount = totalCount - noteCount
+                
         // Generate waveform of note, including rest based on articulation
-        let indices = vDSP.ramp(withInitialValue: Float.zero, increment: 1.0, count: count)
+        let indices = vDSP.ramp(withInitialValue: Float.zero, increment: 1.0, count: noteCount)
         let phaseIncrement = Float(2.0 * Double.pi * pitch.frequency / sampleRate)
         let phases = vDSP.multiply(phaseIncrement, indices)
-        var waveform: [Float] = vForce.sin(phases).map { $0 >= 0.0 ? 1.0 : -1.0 }
+        var waveform: [Float] = vForce.sin(phases).map { $0 >= 0.0 ? 0.25 : -0.25 }
         
         // Apply ADSR envelope to minimize clicking
         adsrEnvelope(attack: 0.005, release: 0.005, waveform: &waveform, sampleRate: sampleRate)
         
-        return waveform
+        return waveform + Array(repeating: 0.0, count: restCount)
     }
 }

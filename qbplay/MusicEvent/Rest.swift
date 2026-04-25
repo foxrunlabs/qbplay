@@ -39,12 +39,3 @@ struct Rest: MusicEvent {
         self.absoluteDuration = (60.0 / TimeInterval(tempo)) * self.duration
     }
 }
-
-
-// MARK: - Music Event
-extension Rest {
-    func samples(sampleRate: Hertz) -> [Float] {
-        let count = Int((sampleRate * absoluteDuration).rounded())
-        return Array(repeating: 0.0, count: count)
-    }
-}

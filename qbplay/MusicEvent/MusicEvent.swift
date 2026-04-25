@@ -1,12 +1,12 @@
 import Foundation
 
 /// Playable music events.
-protocol MusicEvent {
-    /// Tempo of the music event in beats per minute.
-    var tempo: Int { get }
-    
+protocol MusicEvent {   
     /// Duration of the music event in beats.
-    var duration: Beat { get }
+    var duration: Double { get }
+    
+    /// Duration of the music event in seconds.
+    var absoluteDuration: TimeInterval { get }
     
     /// Calculate waveform samples representing the music event for a given sampling rate.
     /// - Parameter sampleRate: Sampling rate in Hertz.

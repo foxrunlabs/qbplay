@@ -4,9 +4,9 @@ import Foundation
 /// A representation of a musical note.
 struct Note: MusicEvent {
     let pitch: Pitch
-    let tempo: Int
     let articulation: Articulation
-    let duration: Beat
+    let duration: Double
+    let absoluteDuration: TimeInterval
     
     private static let validTempoRange = 32...255
     private static let validLengthRange = 1...64
@@ -38,17 +38,20 @@ struct Note: MusicEvent {
         }
         
         self.pitch = pitch
-        self.tempo = tempo
         self.articulation = articulation
         
         // Sustain is computed from the number of dots, with the first dot representing an
         // additional half-length, and each subsequent dot adding a progressively halved values. For
         // example, one dot makes a note 0.5 times as long, two dots makes a note 0.75 times as
         // long, three dots makes a note 0.875 times as long, and so on.
-        let sustain = 2.0 - pow(0.5, Beat(dots))
+        let sustain = 2.0 - pow(0.5, Double(dots))
         
         // Duration of the note in beats is computed based on 4/4 timing.
-        self.duration = (4.0 / Beat(length)) * sustain
+        self.duration = (4.0 / Double(length)) * sustain
+        
+        // Absolute duration is based on tempo. For example a quarter note (one beat at 4/4 timing)
+        // at 120 bpm tempo is 0.5 seconds long.
+        self.absoluteDuration = (60.0 / TimeInterval(tempo)) * self.duration
     }
     
     // MARK: - Methods
@@ -109,32 +112,30 @@ struct Note: MusicEvent {
 // MARK: - Music Event
 extension Note {
     func samples(sampleRate: Hertz) -> [Float] {
-        // Total time is based on tempo. For example a quarter note (one beat at 4/4 timing) at
-        // 120 bpm tempo is 0.5 seconds long.
-        let totalTime = (60.0 / Beat(tempo)) * duration
-        
         // Calculate count of total samples, audible note samples, and rest samples
-        let totalCount = Int((sampleRate * totalTime).rounded())
+        let totalCount = Int((sampleRate * absoluteDuration).rounded())
         let noteCount = Int((Double(totalCount) * articulation.rawValue).rounded())
-        let restCount = totalCount - noteCount
                 
-        // Generate phase information for note
+        // Generate sine wave of note
         let indices = vDSP.ramp(withInitialValue: Float.zero, increment: 1.0, count: noteCount)
         let phaseIncrement = Float(2.0 * Double.pi * pitch.frequency / sampleRate)
-        let phases = vDSP.multiply(phaseIncrement, indices)
+        var noteSamples = vDSP.multiply(phaseIncrement, indices)
+        vForce.sin(noteSamples, result: &noteSamples)
         
-        // Shape note from sine wave to closer to a square wave and adjust amplitude
+        // Shape from sine wave to closer to a square wave and adjust amplitude
         let drive: Float = 7.0
         let amplitude: Float = 0.20
-        
-        var waveform: [Float] = vForce.sin(phases)
-        vDSP.multiply(drive, waveform, result: &waveform)
-        vForce.tanh(waveform, result: &waveform)
-        vDSP.multiply(amplitude, waveform, result: &waveform)
+        vDSP.multiply(drive, noteSamples, result: &noteSamples)
+        vForce.tanh(noteSamples, result: &noteSamples)
+        vDSP.multiply(amplitude, noteSamples, result: &noteSamples)
         
         // Apply ADSR envelope to minimize clicking
-        adsrEnvelope(attack: 0.001, release: 0.0015, waveform: &waveform, sampleRate: sampleRate)
+        adsrEnvelope(attack: 0.001, release: 0.0015, waveform: &noteSamples, sampleRate: sampleRate)
         
-        return waveform + Array(repeating: 0.0, count: restCount)
+        // Copy the note samples to the waveform, accounting for articulation
+        var waveform = [Float](repeating: 0.0, count: totalCount)
+        waveform.replaceSubrange(0..<noteSamples.count, with: noteSamples)
+        
+        return waveform
     }
 }

@@ -50,7 +50,7 @@ struct ContentView: View {
             do {
                 let commands = try MMLLexer.lex(tune.trimmingCharacters(in: .whitespacesAndNewlines))
                 let events = try MMLInterpreter.interpret(commands)
-                let samples = AudioRenderer.render(events, sampleRate: player.format.sampleRate)
+                let samples = MusicEventRenderer.render(events, sampleRate: player.format.sampleRate)
                 try player.play(samples)
             } catch let error as LocalizedError {
                 print(

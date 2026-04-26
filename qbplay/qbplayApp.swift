@@ -12,5 +12,6 @@ struct qbplayApp: App {
                 ContentUnavailableView("Audio Unavailable", systemImage: "speaker.slash")
             }
         }
+        .windowResizability(.contentSize)
     }
 }

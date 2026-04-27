@@ -2,7 +2,6 @@ import AVFoundation
 import Observation
 
 /// An object that plays audio waveforms.
-@MainActor
 @Observable
 final class AudioPlayer {
     private let audioEngine = AVAudioEngine()
@@ -10,7 +9,6 @@ final class AudioPlayer {
     private(set) var isPlaying = false
     
     // MARK: - Initializers
-    
     /// Creates a MML music event player.
     /// - Throws: This initializer throws an error if the `AVAudioEngine` fails to start.
     init() throws {
@@ -24,34 +22,40 @@ final class AudioPlayer {
     var format: AVAudioFormat { audioEngine.outputNode.outputFormat(forBus: 0) }
     
     // MARK: - Methods
-
-    /// Plays audio.
-    /// - Parameter samples: An array of samples.
-    /// - Throws: If there is an error creating the audio PCM buffer and pointer to `Float` channel data, this method throws the
-    /// PlayerError.noAudioData error.
-    func play(_ samples: [Float]) throws {
-        guard !samples.isEmpty else { return }
+    /// Creates a PCM buffer for audio samples.
+    /// - Parameters:
+    ///   - samples: Audio samples.
+    ///   - format: PCM format.
+    /// - Returns: An audio PCM buffer, or `nil` if failed.
+    func pcmBuffer(for samples: [Float], format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        let frameCount = AVAudioFrameCount(samples.count)
+        
         guard
-            let buffer = AVAudioPCMBuffer(
-                pcmFormat: format,
-                frameCapacity: AVAudioFrameCount(samples.count)
-            ),
+            frameCount > 0,
+            let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),
             let channelData = buffer.floatChannelData
         else {
-            throw PlayerError.noAudioData
+            return nil
         }
         
-        // Copy the audio waveform to audio PCM buffer channels.
-        buffer.frameLength = AVAudioFrameCount(samples.count)
-        let channelCount = Int(format.channelCount)
+        // Copy the audio waveform to the audio PCM buffer channels.
+        buffer.frameLength = frameCount
         samples.withUnsafeBufferPointer { ptr in
             guard let base = ptr.baseAddress else { return }
             
             // Automatically accounts for mono or stereo.
-            for channel in 0..<channelCount {
+            for channel in 0..<Int(format.channelCount) {
                 channelData[channel].update(from: base, count: samples.count)
             }
         }
+        
+        return buffer
+    }
+    
+    /// Plays audio.
+    /// - Parameter samples: An array of audio samples.
+    func play(_ samples: [Float]) {
+        guard let buffer = pcmBuffer(for: samples, format: format) else { return }
         
         isPlaying = false
         audioPlayerNode.stop()
@@ -74,14 +78,3 @@ final class AudioPlayer {
         audioPlayerNode.stop()
     }
 }
-
-
-// MARK: - Player Error
-extension AudioPlayer {
-    /// An error that occurs when playing MML music events.
-    enum PlayerError: Error {
-        /// An indication that there is no audio data available.
-        case noAudioData
-    }
-}
-

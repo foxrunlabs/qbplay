@@ -59,7 +59,7 @@ struct ContentView: View {
     /// Validates the MML command string.
     private func validateTune() {
         do {
-            renderedTune = try TuneRenderer.render(tuneString, sampleRate: player.format.sampleRate)
+            renderedTune = try AudioRenderer.render(tuneString, sampleRate: player.format.sampleRate)
             validationError = nil
         } catch {
             renderedTune = []

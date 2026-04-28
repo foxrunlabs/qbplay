@@ -8,11 +8,11 @@ struct ContentView: View {
     @State private var tuneString = ""
     @FocusState private var isEditorFocused: Bool
     
-    @State private var renderedTune: [Float] = []
+    @State private var audioSamples: [Float] = []
     @State private var validationError: Error?
     
     // MARK: - Computed Properties
-    private var isValidMML: Bool { !renderedTune.isEmpty && validationError == nil }
+    private var isValidMML: Bool { !audioSamples.isEmpty && validationError == nil }
     private var playButtonLabel: String { player.isPlaying ? "<Stop>" : "<Play>" }
     private var canPlay: Bool { player.isPlaying || isValidMML }
     
@@ -59,17 +59,25 @@ struct ContentView: View {
     /// Validates the MML command string.
     private func validateTune() {
         do {
-            renderedTune = try AudioRenderer.render(tuneString, sampleRate: player.format.sampleRate)
+            audioSamples = try AudioSamplesRenderer.render(
+                tuneString,
+                sampleRate: player.format.sampleRate
+            )
+            
             validationError = nil
         } catch {
-            renderedTune = []
+            audioSamples = []
             validationError = error
         }
     }
     
     /// Opens a save panel to export the MML string in WAV format.
     private func export() {
-        guard let buffer = player.pcmBuffer(for: renderedTune, format: player.format) else { return }
+        guard
+            let audioBuffer = AudioBufferRenderer.render(audioSamples, format: player.format)
+        else {
+            return
+        }
         
         let panel = NSSavePanel()
         panel.title = "Export Music"
@@ -83,12 +91,12 @@ struct ContentView: View {
             do {
                 let file = try AVAudioFile(
                     forWriting: url,
-                    settings: buffer.format.settings,
-                    commonFormat: buffer.format.commonFormat,
-                    interleaved: buffer.format.isInterleaved
+                    settings: audioBuffer.format.settings,
+                    commonFormat: audioBuffer.format.commonFormat,
+                    interleaved: audioBuffer.format.isInterleaved
                 )
                 
-                try file.write(from: buffer)
+                try file.write(from: audioBuffer)
             } catch {
                 print(error.localizedDescription)
             }
@@ -100,7 +108,13 @@ struct ContentView: View {
         if player.isPlaying {
             player.stop()
         } else {
-            player.play(renderedTune)
+            guard
+                let audioBuffer = AudioBufferRenderer.render(audioSamples, format: player.format)
+            else {
+                return
+            }
+            
+            player.play(audioBuffer)
         }
     }
 }
@@ -108,7 +122,7 @@ struct ContentView: View {
 
 // MARK: - Preview
 #Preview {
-    let player = try? AudioPlayer()
+    let player = try? AudioPlayer(sampleRate: 48_000.0, channels: 1)
     
     if let player {
         ContentView(player: player)

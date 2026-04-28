@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct qbplayApp: App {
-    private let player = try? AudioPlayer()
+    private let player = try? AudioPlayer(sampleRate: 48_000.0, channels: 1)
     
     var body: some Scene {
         WindowGroup {

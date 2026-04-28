@@ -1,7 +1,7 @@
 import Foundation
 
 /// An object that renders MML command strings to audio samples.
-struct AudioRenderer {
+struct AudioSamplesRenderer {
     /// Renders audio from a MML command string.
     /// - Parameters:
     ///   - tune: String representing MML commands.

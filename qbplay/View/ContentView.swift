@@ -8,11 +8,11 @@ struct ContentView: View {
     @State private var tuneString = ""
     @FocusState private var isEditorFocused: Bool
     
-    @State private var audioSamples: [Float] = []
+    @State private var musicEvents: [MusicEvent] = []
     @State private var validationError: Error?
     
     // MARK: - Computed Properties
-    private var isValidMML: Bool { !audioSamples.isEmpty && validationError == nil }
+    private var isValidMML: Bool { !musicEvents.isEmpty && validationError == nil }
     private var playButtonLabel: String { player.isPlaying ? "<Stop>" : "<Play>" }
     private var canPlay: Bool { player.isPlaying || isValidMML }
     
@@ -59,28 +59,27 @@ struct ContentView: View {
     /// Validates the MML command string.
     private func validateTune() {
         do {
-            audioSamples = try AudioSamplesRenderer.render(
-                tuneString,
-                sampleRate: player.format.sampleRate
-            )
-            
+            let commands = try MMLLexer.lex(tuneString)
+            musicEvents = try MMLInterpreter.interpret(commands)
             validationError = nil
         } catch {
-            audioSamples = []
+            musicEvents = []
             validationError = error
         }
     }
     
+    /// Creates a PCM audio buffer from the music events.
+    private func makeAudioBuffer() -> AVAudioPCMBuffer? {
+        let samples = MusicEventRenderer.render(musicEvents, sampleRate: player.format.sampleRate)
+        return AudioBufferRenderer.render(samples, format: player.format)
+    }
+    
     /// Opens a save panel to export the MML string in WAV format.
     private func export() {
-        guard
-            let audioBuffer = AudioBufferRenderer.render(audioSamples, format: player.format)
-        else {
-            return
-        }
+        guard let audioBuffer = makeAudioBuffer() else { return }
         
         let panel = NSSavePanel()
-        panel.title = "Export Music"
+        panel.title = "Export Tune"
         panel.allowedContentTypes = [.wav]
         panel.showsContentTypes = true
         panel.nameFieldStringValue = "music.wav"
@@ -107,14 +106,8 @@ struct ContentView: View {
     private func play() {
         if player.isPlaying {
             player.stop()
-        } else {
-            guard
-                let audioBuffer = AudioBufferRenderer.render(audioSamples, format: player.format)
-            else {
-                return
-            }
-            
-            player.play(audioBuffer)
+        } else if let audioBuffer = makeAudioBuffer() {
+                player.play(audioBuffer)
         }
     }
 }

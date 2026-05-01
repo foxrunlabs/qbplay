@@ -12,8 +12,8 @@ struct ContentView: View {
     @State private var validationError: Error?
     
     // MARK: - Computed Properties
+    private var playButtonLabel: String { player.isPlaying ? "<Cmd+R=Stop>" : "<Cmd+R=Play>" }
     private var isValidMML: Bool { !musicEvents.isEmpty && validationError == nil }
-    private var playButtonLabel: String { player.isPlaying ? "<Stop>" : "<Play>" }
     private var canPlay: Bool { player.isPlaying || isValidMML }
     
     // MARK: - Body
@@ -37,9 +37,11 @@ struct ContentView: View {
             
             HStack {
                 Button(playButtonLabel, action: play)
+                    .keyboardShortcut("r", modifiers: .command)
                     .disabled(!canPlay)
                 
-                Button("<Export>", action: export)
+                Button("<Cmd+E=Export>", action: export)
+                    .keyboardShortcut("e", modifiers: .command)
                     .disabled(!isValidMML)
                 
                 Spacer()

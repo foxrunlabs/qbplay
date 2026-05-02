@@ -105,7 +105,7 @@ struct MMLInterpreter {
             
             // Shift octave down
             case .octaveDown:
-                state.octave = max(Self.validOctaveRange.lowerBound, state.octave - 1)
+                state.octave = max(Self.validOctaveRange.lowerBound + 2, state.octave - 1)
             
             // Shift octave up
             case .octaveUp:

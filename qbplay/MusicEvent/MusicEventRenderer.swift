@@ -19,7 +19,15 @@ struct MusicEventRenderer {
             let previous = index > events.startIndex ? events[events.index(before: index)] : nil
             let next = events.index(after: index) < events.endIndex ? events[events.index(after: index)] : nil
             
-            output.append(contentsOf: samples(for: events[index], previous: previous, next: next, phase: &phase, sampleRate: sampleRate))
+            output.append(
+                contentsOf: samples(
+                    for: events[index],
+                    previous: previous,
+                    next: next,
+                    phase: &phase,
+                    sampleRate: sampleRate
+                )
+            )
         }
         
         return output

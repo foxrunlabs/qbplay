@@ -15,6 +15,7 @@ struct ContentView: View {
     private var playButtonLabel: String { player.isPlaying ? "<Cmd+R=Stop>" : "<Cmd+R=Play>" }
     private var isValidMML: Bool { !musicEvents.isEmpty && validationError == nil }
     private var canPlay: Bool { player.isPlaying || isValidMML }
+    private var canExport: Bool { !player.isPlaying && isValidMML }
     
     // MARK: - Body
     var body: some View {
@@ -37,16 +38,23 @@ struct ContentView: View {
             
             HStack {
                 Button(playButtonLabel, action: play)
+                    .buttonStyle(.qbasic)
                     .keyboardShortcut("r", modifiers: .command)
                     .disabled(!canPlay)
                 
                 Button("<Cmd+E=Export>", action: export)
+                    .buttonStyle(.qbasic)
                     .keyboardShortcut("e", modifiers: .command)
-                    .disabled(!isValidMML)
+                    .disabled(!canExport)
                 
                 Spacer()
+                
+                if let validationError {
+                    Text(validationError.localizedDescription)
+                        .font(.custom("Px437 IBM VGA 9x16", size: 16))
+                        .foregroundStyle(.vgaBrightYellow)
+                }
             }
-            .buttonStyle(.qbasic)
             .padding(4)
         }
         .frame(width: 640, height: 480)
@@ -109,7 +117,7 @@ struct ContentView: View {
         if player.isPlaying {
             player.stop()
         } else if let audioBuffer = makeAudioBuffer() {
-                player.play(audioBuffer)
+            player.play(audioBuffer)
         }
     }
 }

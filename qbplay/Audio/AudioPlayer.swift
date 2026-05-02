@@ -5,10 +5,8 @@ import Observation
 @Observable
 final class AudioPlayer {
     private(set) var format: AVAudioFormat
-    
     private let audioEngine = AVAudioEngine()
     private let audioPlayerNode = AVAudioPlayerNode()
-    
     private(set) var isPlaying = false
     
     // MARK: - Initializers
@@ -38,14 +36,16 @@ final class AudioPlayer {
     func play(_ buffer: AVAudioPCMBuffer) {
         guard buffer.format == format else { return }
         
-        isPlaying = false
         audioPlayerNode.stop()
+        isPlaying = false
         
-        audioPlayerNode.scheduleBuffer(buffer, at: nil) { [weak self] in
+        audioPlayerNode.scheduleBuffer(
+            buffer,
+            completionCallbackType: .dataConsumed
+        ) { [weak self] _ in
             // Execute on the main thread
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.isPlaying = false
+                self?.isPlaying = false
             }
         }
         

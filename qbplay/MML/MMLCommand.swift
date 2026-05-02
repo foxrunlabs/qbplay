@@ -20,7 +20,7 @@ enum MMLCommand: CustomStringConvertible {
     /// Play a numbered note.
     /// - Parameters:
     ///     - number: A value in the range of 0 to 84 that represents the note. A value of 0 represents a rest, and audible notes start
-    ///     at 1, representing C0.
+    ///     at 1, representing C2.
     ///     - dots: An optional value representing the number of sustain dots for the note.
     case numberedNote(_ number: Int, dots: Int)
     

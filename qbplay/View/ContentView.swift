@@ -11,8 +11,10 @@ struct ContentView: View {
     @State private var musicEvents: [MusicEvent] = []
     @State private var validationError: Error?
     
+    @Environment(\.openWindow) private var openWindow
+    
     // MARK: - Computed Properties
-    private var playButtonLabel: String { player.isPlaying ? "<Cmd+R=Stop>" : "<Cmd+R=Play>" }
+    private var playButtonLabel: String { player.isPlaying ? "<Stop>" : "<Play>" }
     private var isValidMML: Bool { !musicEvents.isEmpty && validationError == nil }
     private var canPlay: Bool { player.isPlaying || isValidMML }
     private var canExport: Bool { !player.isPlaying && isValidMML }
@@ -20,6 +22,7 @@ struct ContentView: View {
     // MARK: - Body
     var body: some View {
         VStack(spacing: 0) {
+            // Title bar.
             HStack {
                 Text("QBasic Music Player")
                     .font(.custom("Px437 IBM VGA 9x16", size: 16))
@@ -28,6 +31,7 @@ struct ContentView: View {
             .frame(maxWidth: .infinity)
             .background(.vgaWhite)
             
+            // Editor.
             TextEditor(text: $tuneString)
                 .qbasicTextEditorStyle()
                 .focused($isEditorFocused)
@@ -36,16 +40,21 @@ struct ContentView: View {
                     validateTune()
                 }
             
+            // Bottom bar.
             HStack {
                 Button(playButtonLabel, action: play)
                     .buttonStyle(.qbasic)
                     .keyboardShortcut("r", modifiers: .command)
                     .disabled(!canPlay)
                 
-                Button("<Cmd+E=Export>", action: export)
+                Button("<Export>", action: export)
                     .buttonStyle(.qbasic)
                     .keyboardShortcut("e", modifiers: .command)
                     .disabled(!canExport)
+                
+                Button("<Help>", action: help)
+                    .buttonStyle(.qbasic)
+                    .keyboardShortcut("?", modifiers: .command)
                 
                 Spacer()
                 
@@ -84,6 +93,15 @@ struct ContentView: View {
         return AudioBufferRenderer.render(samples, format: player.format)
     }
     
+    /// Plays music.
+    private func play() {
+        if player.isPlaying {
+            player.stop()
+        } else if let audioBuffer = makeAudioBuffer() {
+            player.play(audioBuffer)
+        }
+    }
+    
     /// Opens a save panel to export the MML string in WAV format.
     private func export() {
         guard let audioBuffer = makeAudioBuffer() else { return }
@@ -112,19 +130,15 @@ struct ContentView: View {
         }
     }
     
-    /// Plays music.
-    private func play() {
-        if player.isPlaying {
-            player.stop()
-        } else if let audioBuffer = makeAudioBuffer() {
-            player.play(audioBuffer)
-        }
+    /// Opens the MML reference window.
+    private func help() {
+        openWindow(id: "mml-reference")
     }
 }
 
 
 // MARK: - Preview
-#Preview {
+#Preview("QBPlay") {
     let player = try? AudioPlayer(sampleRate: 48_000.0, channels: 1)
     
     if let player {

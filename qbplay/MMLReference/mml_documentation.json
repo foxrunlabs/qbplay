@@ -1,0 +1,110 @@
+[
+    {
+        "command": "A-G[#|+|-][*length*][*dots*...]",
+        "description": "Play note `A...G`.",
+        "options": [
+            {
+                "token": "`#`, `+`",
+                "description": "Sharp."
+            },
+            {
+                "token": "`-`",
+                "description": "Flat."
+            },
+            {
+                "token": "*`length`*",
+                "description": "Duration of the note (see **`L`*****`n`*** for details)."
+            },
+            {
+                "token": "*`dots`*",
+                "description": "Each `.` lengthens the note by 50 percent."
+            }
+        ]
+    },
+    {
+        "command": "L*n*",
+        "description": "Set note duration.",
+        "options": [
+            {
+                "token": "*`n`*",
+                "description": "Value between `1...64`. `L1` is a whole note, `L4` is a quarter note, etc. [default `4`]"
+            }
+        ]
+    },
+    {
+        "command": "M{L|N|S}",
+        "description": "Set note articulation.",
+        "options": [
+            {
+                "token": "`L`",
+                "description": "Legato (full duration)."
+            },
+            {
+                "token": "`N`",
+                "description": "Normal (seven-eights duration). [default]"
+            },
+            {
+                "token": "`S`",
+                "description": "Staccato (three-fourths duration)."
+            }
+        ]
+    },
+    {
+        "command": "N*n*[*dots*...]",
+        "description": "Play numbered note.",
+        "options": [
+            {
+                "token": "*`n`*",
+                "description": "Value between `0...84`. `0` represents a rest."
+            },
+            {
+                "token": "*`dots`*",
+                "description": "Each `.` lengthens the note by 50 percent."
+            }
+        ]
+    },
+    {
+        "command": "O*n*",
+        "description": "Set octave.",
+        "options": [
+            {
+                "token": "*`n`*",
+                "description": "Value between `0...6`. Middle C is at the bottom of `O2`. [default `4`]"
+            }
+        ]
+    },
+    {
+        "command": "P*n*[*dots*...]",
+        "description": "Rest.",
+        "options": [
+            {
+                "token": "*`n`*",
+                "description": "Value between `1...64`. `P1` is a whole rest, `P4` is a quarter rest, etc."
+            },
+            {
+                "token": "*`dots`*",
+                "description": "Each `.` lengthens the rest by 50 percent."
+            }
+        ]
+    },
+    {
+        "command": "T*n*",
+        "description": "Set tempo in beats per minute.",
+        "options": [
+            {
+                "token": "*`n`*",
+                "description": "Value between `32...255`. [default `120`]"
+            }
+        ]
+    },
+    {
+        "command": "<",
+        "description": "Decrease octave.",
+        "options": []
+    },
+    {
+        "command": ">",
+        "description": "Increase octave.",
+        "options": []
+    }
+]

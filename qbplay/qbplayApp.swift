@@ -14,11 +14,31 @@ struct qbplayApp: App {
             }
         }
         .windowResizability(.contentSize)
+        .commands {
+            HelpCommands()
+        }
         
         UtilityWindow("MML Reference", id: "mml-reference") {
             MMLReferenceView(documentation: documentation)
                 .frame(minWidth: 320, minHeight: 240)
         }
         .windowResizability(.contentSize)
+        .commandsRemoved()
+    }
+}
+
+
+// MARK: - Help Commands
+fileprivate struct HelpCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+    
+    // MARK: - Body
+    var body: some Commands {
+        CommandGroup(replacing: .help) {
+            Button("MML Reference") {
+                openWindow(id: "mml-reference")
+            }
+            .keyboardShortcut("0", modifiers: [.shift, .command])
+        }
     }
 }

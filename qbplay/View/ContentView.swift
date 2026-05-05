@@ -11,8 +11,6 @@ struct ContentView: View {
     @State private var musicEvents: [MusicEvent] = []
     @State private var validationError: Error?
     
-    @Environment(\.openWindow) private var openWindow
-    
     // MARK: - Computed Properties
     private var playButtonLabel: String { player.isPlaying ? "<Stop>" : "<Play>" }
     private var isValidMML: Bool { !musicEvents.isEmpty && validationError == nil }
@@ -51,10 +49,6 @@ struct ContentView: View {
                     .buttonStyle(.qbasic)
                     .keyboardShortcut("e", modifiers: .command)
                     .disabled(!canExport)
-                
-                Button("<Help>", action: help)
-                    .buttonStyle(.qbasic)
-                    .keyboardShortcut("?", modifiers: .command)
                 
                 Spacer()
                 
@@ -128,11 +122,6 @@ struct ContentView: View {
                 print(error.localizedDescription)
             }
         }
-    }
-    
-    /// Opens the MML reference window.
-    private func help() {
-        openWindow(id: "mml-reference")
     }
 }
 

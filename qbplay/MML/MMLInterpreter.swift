@@ -1,5 +1,5 @@
 /// An object that interprets MML commands.
-struct MMLInterpreter {
+enum MMLInterpreter {
     /// State of the MML interpreter, representing note length, articulation, octave, and tempo.
     struct State {
         /// Length of each note. Default is `4`, representing a quarter note.

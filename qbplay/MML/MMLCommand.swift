@@ -6,10 +6,10 @@ enum MMLCommand: CustomStringConvertible {
     
     /// Play a named note.
     /// - Parameters:
-    ///     - pitchClass: A value in the range A to G representing the pitch class.
-    ///     - accidental: The accidental symbol for the note.
-    ///     - length: An optional value in the range of 1 to 64 representing the length of the note.
-    ///     - dots: A value representing the number of sustain dots for the note.
+    ///    - pitchClass: A value in the range A to G representing the pitch class.
+    ///    - accidental: The accidental symbol for the note.
+    ///    - length: An optional value in the range of 1 to 64 representing the length of the note.
+    ///    - dots: A value representing the number of sustain dots for the note.
     case namedNote(_ pitchClass: PitchClass, accidental: Accidental, length: Int?, dots: Int)
     
     /// Set the length of each note.
@@ -19,9 +19,9 @@ enum MMLCommand: CustomStringConvertible {
     
     /// Play a numbered note.
     /// - Parameters:
-    ///     - number: A value in the range of 0 to 84 that represents the note. A value of 0 represents a rest, and audible notes start
+    ///    - number: A value in the range of 0 to 84 that represents the note. A value of 0 represents a rest, and audible notes start
     ///     at 1, representing C2.
-    ///     - dots: An optional value representing the number of sustain dots for the note.
+    ///    - dots: An optional value representing the number of sustain dots for the note.
     case numberedNote(_ number: Int, dots: Int)
     
     /// Set the current octave.
@@ -37,8 +37,8 @@ enum MMLCommand: CustomStringConvertible {
     
     /// Rest.
     /// - Parameters:
-    ///     - length: A value in the range of 1 to 64 representing the length of the rest.
-    ///     - dots: A value representing the number of sustain dots for the rest.
+    ///    - length: A value in the range of 1 to 64 representing the length of the rest.
+    ///    - dots: A value representing the number of sustain dots for the rest.
     case rest(length: Int, dots: Int)
     
     /// Set the tempo.

@@ -1,5 +1,5 @@
 /// An object that lexes MML command strings.
-struct MMLLexer {
+enum MMLLexer {
     /// Lex a tune string.
     /// - Parameter tune: A string representing MML commands.
     /// - Returns: A sequence of MML commands.

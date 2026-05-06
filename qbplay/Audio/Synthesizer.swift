@@ -2,8 +2,9 @@ import Accelerate
 import Foundation
 
 /// An object that renders audio waveforms from music events.
-struct MusicEventRenderer {
-    /// Renders audio from music events.
+enum Synthesizer {
+    // MARK: - Methods
+    /// Synthesizes audio from music events.
     /// - Parameters:
     ///    - events: An array of music events.
     ///    - sampleRate: Sampling rate in Hertz.

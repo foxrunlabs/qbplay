@@ -3,9 +3,9 @@ import AVFoundation
 import SwiftUI
 
 struct ContentView: View {
-    let player: AudioPlayer
+    @Environment(AudioPlayer.self) private var player
     
-    @State private var tuneString = ""
+    @State private var tune = ""
     @FocusState private var isEditorFocused: Bool
     
     @State private var musicEvents: [MusicEvent] = []
@@ -14,36 +14,36 @@ struct ContentView: View {
     // MARK: - Computed Properties
     private var playButtonLabel: String { player.isPlaying ? "<Stop>" : "<Play>" }
     private var isValidMML: Bool { !musicEvents.isEmpty && validationError == nil }
-    private var canPlay: Bool { player.isPlaying || isValidMML }
-    private var canExport: Bool { !player.isPlaying && isValidMML }
+    private var canPlayOrStop: Bool { isValidMML || player.isPlaying }
+    private var canExport: Bool { isValidMML }
     
     // MARK: - Body
     var body: some View {
         VStack(spacing: 0) {
             // Title bar.
-            HStack {
-                Text("QBasic Music Player")
-                    .font(.custom("Px437 IBM VGA 9x16", size: 16))
-                    .foregroundStyle(.vgaBlack)
-            }
-            .frame(maxWidth: .infinity)
-            .background(.vgaWhite)
+            Text("QBasic Music Player")
+                .frame(maxWidth: .infinity)
+                .font(.custom("Px437 IBM VGA 9x16", size: 16))
+                .foregroundStyle(.vgaBlack)
+                .background(.vgaWhite)
             
             // Editor.
-            TextEditor(text: $tuneString)
+            TextEditor(text: $tune)
                 .qbasicTextEditorStyle()
                 .focused($isEditorFocused)
-                .onChange(of: tuneString) {
+                .onChange(of: tune) {
                     player.stop()
                     validateTune()
                 }
             
             // Bottom bar.
             HStack {
-                Button(playButtonLabel, action: play)
-                    .buttonStyle(.qbasic)
-                    .keyboardShortcut("r", modifiers: .command)
-                    .disabled(!canPlay)
+                Button(playButtonLabel) {
+                    player.isPlaying ? stop() : play()
+                }
+                .buttonStyle(.qbasic)
+                .keyboardShortcut("r", modifiers: .command)
+                .disabled(!canPlayOrStop)
                 
                 Button("<Export>", action: export)
                     .buttonStyle(.qbasic)
@@ -72,7 +72,7 @@ struct ContentView: View {
     /// Validates the MML command string.
     private func validateTune() {
         do {
-            let commands = try MMLLexer.lex(tuneString)
+            let commands = try MMLLexer.lex(tune)
             musicEvents = try MMLInterpreter.interpret(commands)
             validationError = nil
         } catch {
@@ -81,24 +81,26 @@ struct ContentView: View {
         }
     }
     
-    /// Creates a PCM audio buffer from the music events.
-    private func makeAudioBuffer() -> AVAudioPCMBuffer? {
-        let samples = MusicEventRenderer.render(musicEvents, sampleRate: player.format.sampleRate)
-        return AudioBufferRenderer.render(samples, format: player.format)
+    /// Creates audio buffer.
+    private func makeBuffer() -> AVAudioPCMBuffer? {
+        let samples = Synthesizer.render(musicEvents, sampleRate: player.format.sampleRate)
+        return AVAudioPCMBuffer.makeMonoBuffer(from: samples, format: player.format)
     }
     
-    /// Plays music.
+    /// Play music events.
     private func play() {
-        if player.isPlaying {
-            player.stop()
-        } else if let audioBuffer = makeAudioBuffer() {
-            player.play(audioBuffer)
-        }
+        guard let buffer = makeBuffer() else { return }
+        player.play(buffer)
+    }
+    
+    /// Stop music events.
+    private func stop() {
+        player.stop()
     }
     
     /// Opens a save panel to export the MML string in WAV format.
     private func export() {
-        guard let audioBuffer = makeAudioBuffer() else { return }
+        guard let buffer = makeBuffer() else { return }
         
         let panel = NSSavePanel()
         panel.title = "Export Tune"
@@ -107,17 +109,22 @@ struct ContentView: View {
         panel.nameFieldStringValue = "music.wav"
         
         panel.begin { response in
-            guard response == .OK, let url = panel.url else { return }
+            guard
+                response == .OK,
+                let url = panel.url
+            else {
+                return
+            }
             
             do {
                 let file = try AVAudioFile(
                     forWriting: url,
-                    settings: audioBuffer.format.settings,
-                    commonFormat: audioBuffer.format.commonFormat,
-                    interleaved: audioBuffer.format.isInterleaved
+                    settings: buffer.format.settings,
+                    commonFormat: buffer.format.commonFormat,
+                    interleaved: buffer.format.isInterleaved
                 )
                 
-                try file.write(from: audioBuffer)
+                try file.write(from: buffer)
             } catch {
                 print(error.localizedDescription)
             }
@@ -128,10 +135,11 @@ struct ContentView: View {
 
 // MARK: - Preview
 #Preview("QBPlay") {
-    let player = try? AudioPlayer(sampleRate: 48_000.0, channels: 1)
+    @Previewable @State var player = try? AudioPlayer(sampleRate: 48_000.0, channels: 1)
     
     if let player {
-        ContentView(player: player)
+        ContentView()
+            .environment(player)
     } else {
         ContentUnavailableView("Audio Unavailable", systemImage: "speaker.slash")
     }

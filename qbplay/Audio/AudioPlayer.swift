@@ -16,8 +16,10 @@ final class AudioPlayer {
         guard
             sampleRate > 0,
             let format = AVAudioFormat(
-                standardFormatWithSampleRate: sampleRate,
-                channels: AVAudioChannelCount(channels)
+                commonFormat: .pcmFormatFloat32,
+                sampleRate: sampleRate,
+                channels: AVAudioChannelCount(channels),
+                interleaved: false
             )
         else {
             throw AudioPlayerError.invalidFormat

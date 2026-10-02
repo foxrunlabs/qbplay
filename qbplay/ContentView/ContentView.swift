@@ -71,6 +71,12 @@ struct ContentView: View {
         panel.showsContentTypes = true
         panel.nameFieldStringValue = "music.wav"
         
+        let options = SavePanelOptions()
+        let accessoryView = SavePanelOptionsView(options: options)
+        let hostingView = NSHostingView(rootView: accessoryView)
+        hostingView.frame = NSRect(x: 0, y: 0, width: 300, height: 100)
+        panel.accessoryView = hostingView
+        
         if panel.runModal() == .OK {
             guard let url = panel.url else { return }
             
@@ -80,6 +86,30 @@ struct ContentView: View {
                 print(error.localizedDescription)
             }
         }
+    }
+}
+
+@Observable
+fileprivate final class SavePanelOptions {
+    var format: AVAudioCommonFormat = .pcmFormatInt16
+}
+
+
+// MARK: - Save Panel Options View
+fileprivate struct SavePanelOptionsView: View {
+    @Bindable var options: SavePanelOptions
+    let cases: [AVAudioCommonFormat] = [.pcmFormatInt16, .pcmFormatFloat32]
+    
+    // MARK: - Body
+    var body: some View {
+        Picker("Encoding", selection: $options.format) {
+            Text("Signed 16-bit PCM")
+                .tag(AVAudioCommonFormat.pcmFormatInt16)
+            
+            Text("32-bit Float")
+                .tag(AVAudioCommonFormat.pcmFormatFloat32)
+        }
+        .pickerStyle(.radioGroup)
     }
 }
 

@@ -55,16 +55,33 @@ extension ContentView {
         
         /// Exports the current tune as audio.
         func export(to url: URL) throws {
-            guard let buffer = makeBuffer() else { return }
+            guard
+                let inputBuffer = makeBuffer(),
+                let outputFormat = AVAudioFormat(
+                    commonFormat: .pcmFormatInt16,
+                    sampleRate: inputBuffer.format.sampleRate,
+                    channels: inputBuffer.format.channelCount,
+                    interleaved: inputBuffer.format.isInterleaved
+                ),
+                let converter = AVAudioConverter(from: inputBuffer.format, to: outputFormat),
+                let outputBuffer = AVAudioPCMBuffer(
+                    pcmFormat: outputFormat,
+                    frameCapacity: inputBuffer.frameLength
+                )
+            else {
+                return
+            }
+            
+            try converter.convert(to: outputBuffer, from: inputBuffer)
             
             let file = try AVAudioFile(
                 forWriting: url,
-                settings: buffer.format.settings,
-                commonFormat: buffer.format.commonFormat,
-                interleaved: buffer.format.isInterleaved
+                settings: outputBuffer.format.settings,
+                commonFormat: outputBuffer.format.commonFormat,
+                interleaved: outputBuffer.format.isInterleaved
             )
             
-            try file.write(from: buffer)
+            try file.write(from: outputBuffer)
         }
     }
 }
